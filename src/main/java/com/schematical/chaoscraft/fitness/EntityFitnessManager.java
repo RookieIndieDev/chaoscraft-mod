@@ -103,7 +103,7 @@ public class EntityFitnessManager {
                 orgEntity.addOrgEvent(new OrgEvent(scoreEvent));
                 occurences.put(scoreEvent.fitnessRule.id, numOfOccurences);
                 if (scoreEvent.life != 0) {
-                    orgEntity.getServerOrgManager().adjustMaxLife(scoreEvent.life);
+                    orgEntity.getServerOrgManager().adjustMaxLife((int)Math.round(scoreEvent.life  * scoreEvent.multiplier));
                 }
             }
 

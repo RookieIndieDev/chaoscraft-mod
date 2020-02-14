@@ -50,7 +50,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-public class OrgEntity extends MobEntity {
+public class OrgEntity extends LivingEntity {
 
     @ObjectHolder("chaoscraft:org_entity")
     public static final EntityType<OrgEntity> ORGANISM_TYPE = null;
@@ -96,10 +96,16 @@ public class OrgEntity extends MobEntity {
     private int spawnHash;
 
 
-    public OrgEntity(EntityType<? extends MobEntity> type, World world) {
+/*    public OrgEntity(EntityType<? extends MobEntity> type, World world) {
         super((EntityType<? extends MobEntity>) type, world);
         setHealth(1);
+    }*/
+
+    public OrgEntity(EntityType<OrgEntity> type, World world) {
+        super((EntityType<OrgEntity>) type, world);
+        setHealth(1);
     }
+
     public void setSpawnHash(int _spawnHash) {
         this.spawnHash = _spawnHash;
     }
@@ -145,16 +151,18 @@ public class OrgEntity extends MobEntity {
     public Iterable<ItemStack> getArmorInventoryList() {
         return new ArrayList<ItemStack>();
     }
-   /* @Override
+
+    @Override
+    public ItemStack getItemStackFromSlot(EquipmentSlotType slotIn) {
+        return  ItemStack.EMPTY;
+    }
+
+    @Override
     public void setItemStackToSlot(EquipmentSlotType slotIn, ItemStack stack) {
 
     }
-    @Override
-    public ItemStack getItemStackFromSlot(EquipmentSlotType slotIn) {
 
 
-        return ItemStack.EMPTY;
-    }*/
     public NeuralNet getNNet(){
         return nNet;
     }
@@ -182,7 +190,7 @@ public class OrgEntity extends MobEntity {
         super.registerAttributes();
         this.getAttribute(SharedMonsterAttributes.MOVEMENT_SPEED).setBaseValue((double)0.3F);
         this.getAttribute(SharedMonsterAttributes.MAX_HEALTH).setBaseValue(10.0D);
-        this.getAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(32.0D);
+        //this.getAttribute(SharedMonsterAttributes.FOLLOW_RANGE).setBaseValue(32.0D);
         this.getAttributes().registerAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).setBaseValue(2.0D);
 
     }
@@ -727,13 +735,15 @@ public class OrgEntity extends MobEntity {
     }
 
     private void updatePitchAndYaw(){
-        double yOffset = Math.sin(Math.toRadians(desiredPitch));
+        /*double yOffset = Math.sin(Math.toRadians(desiredPitch));
         double zOffset = Math.cos(Math.toRadians(this.desiredHeadYaw)) * Math.cos(Math.toRadians(desiredPitch));
         double xOffset = Math.sin(Math.toRadians(this.desiredHeadYaw)) * Math.cos(Math.toRadians(desiredPitch));
         Vec3d pos = getEyePosition(1);
 
-        this.getLookController().setLookPosition(pos.getX() + xOffset, pos.getY()/* + this.getEyeHeight() */+ yOffset, pos.getZ() + zOffset, 360, 360);
-        this.renderYawOffset = 0;
+        this.getLookController().setLookPosition(pos.getX() + xOffset, pos.getY()*//* + this.getEyeHeight() *//*+ yOffset, pos.getZ() + zOffset, 360, 360);
+        */
+        this.renderYawOffset = (float) this.desiredYaw;
+
         this.setRotation((float) this.desiredYaw, 0);
     }
 
@@ -875,7 +885,7 @@ public class OrgEntity extends MobEntity {
 
 
 
-    @Override
+    //@Override
     public boolean processInteract(PlayerEntity player, Hand hand)
     {
         if(

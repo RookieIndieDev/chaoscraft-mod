@@ -21,8 +21,8 @@ public class WalkSidewaysOutput extends OutputNeuron {
 
 
         nNet.entity.moveStrafing = reversedValue * 2;
-        nNet.entity.getMoveHelper().strafe(nNet.entity.moveForward, nNet.entity.moveStrafing);
-        //nNet.entity.move(MoverType.SELF, new Vec3d(nNet.entity.moveForward, 0,  nNet.entity.moveStrafing));
+        //nNet.entity.getMoveHelper().strafe(nNet.entity.moveForward, nNet.entity.moveStrafing);
+        nNet.entity.move(MoverType.SELF, new Vec3d(nNet.entity.moveForward, 0,  nNet.entity.moveStrafing));
         //nNet.entity.setMotion(new Vec3d(nNet.entity.moveForward, 0, nNet.entity.moveStrafing));
     }
 }

@@ -7,7 +7,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -116,17 +115,17 @@ public abstract class NeuronBase extends InnovationBase {
         String response = this.getClass().getSimpleName().replace("Input","");
         response += " ";
 
-        response += getPrettyLastValue();
+        response += getPrettyCurrentValue();
 
         return response;
     }
     public String toLongString(){
         String response = this.getClass().getSimpleName().replace("Input","") + " ";
-        response += getPrettyLastValue();
+        response += getPrettyCurrentValue();
         return response;
     }
-    public float getPrettyLastValue(){
-        float prettyLastValue = (Math.round(this._lastValue * 100f) / 100f);
+    public float getPrettyCurrentValue(){
+        float prettyLastValue = (Math.round(this._currentValue * 100f) / 100f);
         return prettyLastValue;
     }
 

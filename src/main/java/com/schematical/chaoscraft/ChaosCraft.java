@@ -267,7 +267,7 @@ public class ChaosCraft
     public void onEntityRegistry(final RegistryEvent.Register<EntityType<?>> event) {
         //setTrackingRange
         event.getRegistry().registerAll(
-            EntityType.Builder.create(OrgEntity::new, EntityClassification.CREATURE).setTrackingRange(128).build(MODID + ":org_entity").setRegistryName(MODID, "org_entity")
+            EntityType.Builder.<OrgEntity>create(OrgEntity::new, EntityClassification.MISC).setTrackingRange(128).build(MODID + ":org_entity").setRegistryName(MODID, "org_entity")
         );
 
     }
