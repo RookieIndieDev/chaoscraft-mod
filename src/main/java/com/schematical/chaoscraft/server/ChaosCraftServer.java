@@ -15,13 +15,19 @@ import com.schematical.chaoscraft.network.packets.*;
 import com.schematical.chaoscraft.server.spawnproviders.SpawnBlockPosProvider;
 import com.schematical.chaoscraft.server.spawnproviders.iServerSpawnProvider;
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
+import com.schematical.chaoscraft.util.BuildArea;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Hand;
+import net.minecraft.util.IItemProvider;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.dimension.DimensionType;
@@ -49,8 +55,6 @@ public class ChaosCraftServer {
     public int longTickCount = 0;
     public int ticksSinceLastThread = -1;
     public iServerSpawnProvider spawnProvider = new SpawnBlockPosProvider();//PlayerSpawnPosProvider();
-    public static EntityFitnessRule fitnessRule;
-    CCWorldEvent buildEvent = new CCWorldEvent(CCWorldEvent.Type.BUILD_COMPLETE);
 
     public ChaosCraftServer(MinecraftServer server) {
 
@@ -242,16 +246,14 @@ public class ChaosCraftServer {
         orgEntity.setDesiredYaw(yaw);
         orgEntity.setLocationAndAngles(pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
 
-
         serverOrgManager.attachOrgEntity(orgEntity);
         serverWorld.summonEntity(orgEntity);
-
-
-
         sendChaosCraftEntitySpawnInfo(serverOrgManager);
-
+        orgEntity.setHeldItem(Hand.MAIN_HAND, new ItemStack(Blocks.OAK_PLANKS, 64));
+        orgEntity.orgInventory.set(1, new ItemStack(Blocks.OAK_DOOR, 64));
         return orgEntity;
     }
+
     protected  void sendChaosCraftEntitySpawnInfo(ServerOrgManager serverOrgManager){
         ServerPlayerEntity serverPlayerEntity = serverOrgManager.getServerPlayerEntity();
         ChaosNetworkManager.sendTo(
@@ -271,26 +273,36 @@ public class ChaosCraftServer {
         serverOrgManager.queueOutputNeuronAction(message);
 
     }
-    public List<ServerOrgManager> checkForDeadOrgs(){
+
+        public List<ServerOrgManager> checkForDeadOrgs(){
         List<ServerOrgManager> serverOrgManagers = getOrgsWithState(ServerOrgManager.State.Ticking);
         for (ServerOrgManager serverOrgManager : serverOrgManagers) {
             if (!serverOrgManager.getEntity().isAlive()) {
                 if(ChaosCraft.buildAreas.size() > 0){
-                        ChaosCraft.buildAreas.get(0).getBlocks(ChaosBlocks.markerBlocks.get(0));
-                        fitnessRule.scoreEffect = (int) ChaosCraft.buildAreas.get(0).getScore();
-                        fitnessRule.id =  "Build_Rule";
-                        buildEvent.entity = serverOrgManager.getEntity();
-                        buildEvent.amount = 1;
-                        fitnessRule.eventType = CCWorldEvent.Type.BUILD_COMPLETE.toString();
-                        serverOrgManager.getEntity().entityFitnessManager.test(buildEvent);
-                        //EntityFitnessManager fitnessManager = new EntityFitnessManager(serverOrgManager.getEntity());
-                        //fitnessManager.addNewRun();
-                        //fitnessManager.test(buildEvent);
-                        //fitnessRule.testWorldEvent(buildEvent);
-                        ChaosCraft.buildAreas.get(0).resetScore();
-                        BuildAreaMarkerTileEntity.resetBuildArea(ChaosBlocks.markerBlocks.get(0), ChaosCraft.buildAreaMarkers.get(0).getWorld());
-                   }
+                    BuildArea orgBuildArea = new BuildArea();
+                    for(BuildArea buildArea: ChaosCraft.buildAreas){
+                        if(buildArea.getCurrentServerOrgManager()!=null){
+                            if(buildArea.getCurrentServerOrgManager().equals(serverOrgManager)){
+                                    orgBuildArea = buildArea;
+                            break;
+                        }
+                        }
+                    }
 
+                        CCWorldEvent buildEvent = new CCWorldEvent(CCWorldEvent.Type.BUILD_COMPLETE);
+
+                        buildEvent.entity = serverOrgManager.getEntity();
+                        orgBuildArea.getBlocks(orgBuildArea.getBuildaAreaEntity().getPos());
+                        buildEvent.amount = (int) orgBuildArea.getScore();
+                        if(buildEvent.amount > 0){
+                            ChaosCraft.LOGGER.info(serverOrgManager.getEntity().getCCNamespace() + " got a score of: " + buildEvent.amount);
+                        }
+                        buildEvent.eventType = CCWorldEvent.Type.BUILD_COMPLETE;
+                        serverOrgManager.getEntity().entityFitnessManager.test(buildEvent);
+                        orgBuildArea.resetScore();
+                        orgBuildArea.resetBlockPlacedCount();
+                        BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildaAreaEntity().getPos(), orgBuildArea.getBuildaAreaEntity().getWorld());
+                   }
                 serverOrgManager.markDead();
             }
         }

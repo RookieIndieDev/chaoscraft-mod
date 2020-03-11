@@ -53,8 +53,6 @@ public class ChaosCraftClient {
     private ChaosPlayerNeuronTestScreen chaosPlayerNeuronTestScreen;
     private ChaosObserveOverlayScreen chaosObserveOverlayScreen;
 
-
-
     public ChaosCraftClient(Minecraft minecraft) {
         this.minecraft = minecraft;
         chaosObserveOverlayScreen = new ChaosObserveOverlayScreen(this.minecraft);

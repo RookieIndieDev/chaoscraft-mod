@@ -17,7 +17,7 @@ import net.minecraft.util.math.Vec3i;
 public class SpawnBlockTileEntity  extends TileEntity implements ITickableTileEntity {
 
     private String spawnPointId = "default";
-    private int maxLivingEntities = -1;
+    private int maxLivingEntities = 1;
     private int livingEntityCount = 0;
     protected ArrayList<ServerOrgManager> entities = new ArrayList<ServerOrgManager>();
     public SpawnBlockTileEntity() {

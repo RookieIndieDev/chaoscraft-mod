@@ -30,9 +30,8 @@ public class DistNormTracker extends AbstractGui {
 
             for(int i = 0; i < ChaosBlocks.markerBlocks.size(); i++)
             {
-                fontrenderer.drawString("Score :" + ChaosCraft.buildAreas.get(i).getScore(),  25 + (i * i * 45), 25, 14737632);
-                fontrenderer.drawString("Diff " + (i + 1) + " " + ChaosCraft.buildAreas.get(i).getDiffNorm(), 15, (45 * i * i) + 15, 14737632);
-                fontrenderer.drawString("Norm of Area " + (i + 1) + " " + ChaosCraft.buildAreas.get(i).getAreamatrixNorm(), 15, (35 * i * i) + 35, 14737632);
+                fontrenderer.drawString("Score :" + ChaosCraft.buildAreas.get(i).getScore(), 15, (25 * i) + 25, 14737632);
+                fontrenderer.drawString("Norm of Area " + (i + 1) + " " + ChaosCraft.buildAreas.get(i).getAreamatrixNorm(), 15, (35 * i) + 35, 14737632);
             }
         }
         RenderSystem.popMatrix();

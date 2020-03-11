@@ -439,6 +439,7 @@ public class OrgEntity extends MobEntity {
 
         }
     }
+
     public void replaceAlteredBlocks(){
         //ChaosCraft.LOGGER.info(this.getCCNamespace() + " - Trying to replace blocks - Count: " + alteredBlocks.size());
         for (AlteredBlockInfo alteredBlock : alteredBlocks) {

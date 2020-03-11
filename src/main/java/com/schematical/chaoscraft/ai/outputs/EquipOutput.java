@@ -55,6 +55,7 @@ public class EquipOutput extends OutputNeuron {
                     return;//It is already equipped
                 }
                 itemStack = nNet.entity.equip(attributeValue);
+                ChaosCraft.LOGGER.info(nNet.entity.getCCNamespace() + "Equipped:" + attributeValue);
             break;
             default:
                 throw new ChaosNetException("Invalid `EquipOutput.attributeId`: " + attributeId);

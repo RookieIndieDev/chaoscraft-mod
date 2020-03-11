@@ -6,6 +6,7 @@ import com.schematical.chaoscraft.ai.biology.BlockPositionSensor;
 import com.schematical.chaoscraft.blocks.ChaosBlocks;
 import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.entities.OrgEntity;
+import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import com.schematical.chaoscraft.tileentity.ChaosTileEntity;
 import jdk.nashorn.internal.runtime.logging.Loggable;
@@ -40,9 +41,14 @@ public class BuildArea{
     public Array2DRowRealMatrix[] templates = new Array2DRowRealMatrix[4];
     public Array2DRowRealMatrix[] areaMatrices = new Array2DRowRealMatrix[4];
     private BuildAreaMarkerTileEntity buildaAreaEntity;
-    private ClientOrgManager currentClientOrgManager;
+    private ServerOrgManager currentServerOrgManager;
     private double score;
     private int blockPlacedCount = 0;
+    int maxBlockCount = 20;
+
+    public void resetBlockPlacedCount(){
+        blockPlacedCount = 0;
+    }
 
     public void getBlocks(BlockPos pos){
         pos = pos.add(1, -2, -1);
@@ -69,27 +75,16 @@ public class BuildArea{
         this.buildaAreaEntity = tileEntity;
     }
 
-    public void assignCurrentOrgManager(ClientOrgManager orgManager){
-        this.currentClientOrgManager = orgManager;
+    public void assignCurrentOrgManager(ServerOrgManager orgManager){
+        this.currentServerOrgManager = orgManager;
     }
 
-    public ClientOrgManager getCurrentClientOrgManager(){
-        return this.currentClientOrgManager;
+    public ServerOrgManager getCurrentServerOrgManager(){
+        return this.currentServerOrgManager;
     }
     public BuildAreaMarkerTileEntity getBuildaAreaEntity(){
         return this.buildaAreaEntity;
     }
-    /*
-    public void updateBlocks(BlockPos markerPos, BlockPos blockPos){
-        int row = Math.abs(blockPos.getX() - markerPos.getX() - 1);
-        int column = Math.abs(blockPos.getZ() - markerPos.getZ() + 1);
-        if(row <= 11 && column <= 11) {
-            if(getInstance().world != null){
-                updateMatrix(row, column, getInstance().world.getBlockState(blockPos).getBlock().toString());
-            }
-        }
-    }
-    */
 
     public void createMatrices(){
         double[][] intialValues = new double[12][12];
@@ -105,7 +100,6 @@ public class BuildArea{
     }
 
     public void updateMatrix(int row, int col, String block, int areaMatrixIndex){
-        int maxBlockCount = 56;
         switch(block){
                 case "Block{minecraft:oak_planks}":
                     areaMatrices[areaMatrixIndex].getDataRef()[row][col] = 8.0;
@@ -123,7 +117,7 @@ public class BuildArea{
                     areaMatrices[areaMatrixIndex].getDataRef()[row][col] = 10.0;
                     blockPlacedCount += 1;
                     if(blockPlacedCount < maxBlockCount){
-                        score += 1;
+                        score += 0.5;
                     }
                     break;
         }
@@ -196,6 +190,7 @@ public class BuildArea{
                 score += 75;
             }
         }
+
         return score;
     }
 
