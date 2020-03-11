@@ -5,18 +5,25 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.schematical.chaoscraft.ai.CCAttributeId;
 import com.schematical.chaoscraft.ai.NeuralNet;
 import com.schematical.chaoscraft.ai.NeuronBase;
+import com.schematical.chaoscraft.ai.biology.BiologyBase;
 import com.schematical.chaoscraft.ai.biology.TargetSlot;
 import com.schematical.chaoscraft.ai.inputs.BaseTargetInputNeuron;
 import com.schematical.chaoscraft.ai.inputs.TargetDistanceInput;
 import com.schematical.chaoscraft.ai.inputs.TargetPitchInput;
 import com.schematical.chaoscraft.ai.inputs.TargetYawInput;
+import com.schematical.chaoscraft.ai.outputs.LookAtTargetOutput;
 import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.network.packets.CCServerObserverOrgChangeEventPacket;
 import com.schematical.chaoscraft.network.packets.CCServerScoreEventPacket;
+import com.schematical.chaosnet.model.ChaosNetException;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,10 +56,7 @@ public class ChaosObserveOverlayScreen extends AbstractGui {
         }else{
             list.add("Observing: " + clientOrgManager.getCCNamespace());
             NeuralNet nNet = clientOrgManager.getEntity().getNNet();
-            TargetSlot targetSlot = (TargetSlot)nNet.getBiology("TargetSlot_0");
-            if(targetSlot != null){
-                list.add(targetSlot.toString());
-            }
+
             list.add("Score: " + clientOrgManager.getLatestScore());
             float secondsToLive = (clientOrgManager.getExpectedLifeEndTime() - clientOrgManager.getEntity().world.getGameTime()) /20;
             list.add("Expected Life End: " + secondsToLive);
@@ -81,6 +85,62 @@ public class ChaosObserveOverlayScreen extends AbstractGui {
                 this.fontRenderer.drawString(s, (float)x, (float)y, 14737632);
             }
         }
+
+
+
+        list.clear();
+        BlockRayTraceResult rayTraceResult = clientOrgManager.getEntity().rayTraceBlocks(clientOrgManager.getEntity().REACH_DISTANCE);
+        String s = "RayTrace: ";
+        if(rayTraceResult == null){
+            s += "null";
+        }else{
+            s += rayTraceResult.getType() + " ";
+            BlockPos blockPos = rayTraceResult.getPos();
+            s += clientOrgManager.getEntity().world.getBlockState(blockPos).getBlock().getRegistryName().toString();
+            list.add(s);
+            Vec3d eyePos = clientOrgManager.getEntity().getEyePosition(1f);
+            list.add(rayTraceResult.getPos().getX() + ","  + rayTraceResult.getPos().getY() + "," + rayTraceResult.getPos().getZ() + "   " + Math.round(eyePos.getX()) + ", "+ Math.round(eyePos.getY()) + ", " + Math.round(eyePos.getZ()));
+        }
+
+
+
+        for (BiologyBase biologyBase : this.clientOrgManager.getNNet().biology.values()) {
+            if(biologyBase instanceof  TargetSlot) {
+
+                LookAtTargetOutput lookAtTargetOutput = null;
+                for (NeuronBase neuronBase : this.clientOrgManager.getNNet().neurons.values()) {
+                    if(neuronBase instanceof  LookAtTargetOutput){
+                        lookAtTargetOutput = (LookAtTargetOutput) neuronBase;
+                    }
+                }
+                if(lookAtTargetOutput != null) {
+
+
+                    TargetSlot targetSlot = (TargetSlot) biologyBase;
+                    if (targetSlot != null) {
+                        s = targetSlot.toString() + " LATO:" + lookAtTargetOutput.getPrettyCurrValue();
+                        s += " EP:" + Math.round(clientOrgManager.getEntity().rotationPitch);
+                        if (targetSlot.hasTarget()) {
+                            s += " YD:" + Math.round(targetSlot.getYawDelta());
+                            s += " PD:" + Math.round(targetSlot.getPitchDelta());
+                            s += " DD:" + Math.round(targetSlot.getDist());
+                        }
+                       list.add(s);
+                    }
+                }
+            }
+        }
+        int i = 1;
+        for (String _s : list) {
+            int j = 9;
+            int k = this.fontRenderer.getStringWidth(_s);
+            int x = this.mc.getMainWindow().getScaledWidth() - k;
+            int y = 2 + j * i;
+            fill(x - 1, y - 1, x + k + 1, y + j - 1, -1873784752);
+            this.fontRenderer.drawString(_s, (float) x, (float) y, 14737632);
+            i += 1;
+        }
+
         RenderSystem.popMatrix();
     }
 

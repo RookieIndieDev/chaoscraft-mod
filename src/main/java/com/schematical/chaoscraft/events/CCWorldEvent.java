@@ -30,7 +30,8 @@ public class CCWorldEvent {
         TARGET_CLOSE_PITCH,
         TARGET_SELECTED,
         IS_FACING,
-        BUILD_COMPLETE
+        BUILD_COMPLETE,
+        BLOCK_PLACED_TOUCHING_WAYPOINT
     }
     public enum Axis{
         X,

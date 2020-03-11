@@ -25,4 +25,7 @@ public class ChaosItems {
             new BlockItem(ChaosBlocks.BUILD_AREA_MARKER.get(),  new Item.Properties().group(ItemGroup.BUILDING_BLOCKS))
     );
 
+    public static final RegistryObject<Item> WAYPOINT_BLOCK_ITEM = ITEMS.register("waypoint_block_item", () ->
+            new BlockItem(ChaosBlocks.WAYPOINT_BLOCK.get(),  new Item.Properties().group(ItemGroup.BUILDING_BLOCKS))
+    );
 }

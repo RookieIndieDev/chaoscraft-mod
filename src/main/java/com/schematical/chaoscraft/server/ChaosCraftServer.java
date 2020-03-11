@@ -3,13 +3,10 @@ package com.schematical.chaoscraft.server;
 import com.amazonaws.opensdk.config.ConnectionConfiguration;
 import com.amazonaws.opensdk.config.TimeoutConfiguration;
 import com.schematical.chaoscraft.ChaosCraft;
-import com.schematical.chaoscraft.blocks.ChaosBlocks;
+import com.schematical.chaoscraft.entities.AlteredBlockInfo;
 import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.events.CCWorldEvent;
 import com.schematical.chaoscraft.fitness.ChaosCraftFitnessManager;
-import com.schematical.chaoscraft.fitness.EntityFitnessManager;
-import com.schematical.chaoscraft.fitness.EntityFitnessRule;
-import com.schematical.chaoscraft.fitness.FitnessRun;
 import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.*;
 import com.schematical.chaoscraft.server.spawnproviders.SpawnBlockPosProvider;
@@ -19,17 +16,12 @@ import com.schematical.chaoscraft.util.BuildArea;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Hand;
-import net.minecraft.util.IItemProvider;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraft.world.GameType;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.server.ServerWorld;
 import org.json.simple.JSONArray;
@@ -64,7 +56,7 @@ public class ChaosCraftServer {
 
     public void tick(){
         if(
-                ChaosCraft.getServer().fitnessManager == null
+            ChaosCraft.getServer().fitnessManager == null
         ){
             loadFitnessFunctions();
             return;
@@ -78,11 +70,11 @@ public class ChaosCraftServer {
         List<ServerOrgManager> orgNamepacesQueuedToSpawn = getOrgsWithState(ServerOrgManager.State.PlayerAttached);
         ticksSinceLastThread += 1;
         if(
-                orgNamepacesQueuedToSpawn.size() > 0 &&
-                        (
-                                thread == null||
-                                        ticksSinceLastThread > (120 * 20)//TWO MINutes?
-                        )
+            orgNamepacesQueuedToSpawn.size() > 0 &&
+            (
+                    thread == null||
+                    ticksSinceLastThread > (120 * 20)//TWO MINutes?
+            )
         ){
             if(thread != null){
                 thread.interrupt();
@@ -188,8 +180,8 @@ public class ChaosCraftServer {
 
 
         if(
-                ChaosCraft.config.trainingRoomNamespace == null ||
-                        ChaosCraft.config.trainingRoomUsernameNamespace == null
+            ChaosCraft.config.trainingRoomNamespace == null ||
+            ChaosCraft.config.trainingRoomUsernameNamespace == null
         ){
             CCServerRequestTrainingRoomGUIPacket serverIntroInfoPacket = new CCServerRequestTrainingRoomGUIPacket( );
 
@@ -228,7 +220,7 @@ public class ChaosCraftServer {
             }
             ChaosCraft.LOGGER.error(debugMessage);
 
-            return null;
+           return null;
         }
         BlockPos pos = spawnProvider.getSpawnPos(serverOrgManager);
         if(pos == null) {
@@ -246,14 +238,16 @@ public class ChaosCraftServer {
         orgEntity.setDesiredYaw(yaw);
         orgEntity.setLocationAndAngles(pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
 
+
         serverOrgManager.attachOrgEntity(orgEntity);
         serverWorld.summonEntity(orgEntity);
+
+
+
         sendChaosCraftEntitySpawnInfo(serverOrgManager);
-        orgEntity.setHeldItem(Hand.MAIN_HAND, new ItemStack(Blocks.OAK_PLANKS, 64));
-        orgEntity.orgInventory.set(1, new ItemStack(Blocks.OAK_DOOR, 64));
+
         return orgEntity;
     }
-
     protected  void sendChaosCraftEntitySpawnInfo(ServerOrgManager serverOrgManager){
         ServerPlayerEntity serverPlayerEntity = serverOrgManager.getServerPlayerEntity();
         ChaosNetworkManager.sendTo(
@@ -273,47 +267,49 @@ public class ChaosCraftServer {
         serverOrgManager.queueOutputNeuronAction(message);
 
     }
+    public List<ServerOrgManager> checkForDeadOrgs(){
 
-        public List<ServerOrgManager> checkForDeadOrgs(){
         List<ServerOrgManager> serverOrgManagers = getOrgsWithState(ServerOrgManager.State.Ticking);
         for (ServerOrgManager serverOrgManager : serverOrgManagers) {
+
             if (!serverOrgManager.getEntity().isAlive()) {
                 if(ChaosCraft.buildAreas.size() > 0){
                     BuildArea orgBuildArea = new BuildArea();
                     for(BuildArea buildArea: ChaosCraft.buildAreas){
                         if(buildArea.getCurrentServerOrgManager()!=null){
                             if(buildArea.getCurrentServerOrgManager().equals(serverOrgManager)){
-                                    orgBuildArea = buildArea;
-                            break;
-                        }
+                                orgBuildArea = buildArea;
+                                break;
+                            }
                         }
                     }
 
-                        CCWorldEvent buildEvent = new CCWorldEvent(CCWorldEvent.Type.BUILD_COMPLETE);
+                    CCWorldEvent buildEvent = new CCWorldEvent(CCWorldEvent.Type.BUILD_COMPLETE);
 
-                        buildEvent.entity = serverOrgManager.getEntity();
-                        orgBuildArea.getBlocks(orgBuildArea.getBuildaAreaEntity().getPos());
-                        buildEvent.amount = (int) orgBuildArea.getScore();
-                        if(buildEvent.amount > 0){
-                            ChaosCraft.LOGGER.info(serverOrgManager.getEntity().getCCNamespace() + " got a score of: " + buildEvent.amount);
-                        }
-                        buildEvent.eventType = CCWorldEvent.Type.BUILD_COMPLETE;
-                        serverOrgManager.getEntity().entityFitnessManager.test(buildEvent);
-                        orgBuildArea.resetScore();
-                        orgBuildArea.resetBlockPlacedCount();
-                        BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildaAreaEntity().getPos(), orgBuildArea.getBuildaAreaEntity().getWorld());
-                   }
+                    buildEvent.entity = serverOrgManager.getEntity();
+                    orgBuildArea.getBlocks(orgBuildArea.getBuildaAreaEntity().getPos());
+                    buildEvent.amount = (int) orgBuildArea.getScore();
+                    if(buildEvent.amount > 0){
+                        ChaosCraft.LOGGER.info(serverOrgManager.getEntity().getCCNamespace() + " got a score of: " + buildEvent.amount);
+                    }
+                    buildEvent.eventType = CCWorldEvent.Type.BUILD_COMPLETE;
+                    serverOrgManager.getEntity().entityFitnessManager.test(buildEvent);
+                    orgBuildArea.resetScore();
+                    orgBuildArea.resetBlockPlacedCount();
+                    BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildaAreaEntity().getPos(), orgBuildArea.getBuildaAreaEntity().getWorld());
+                }
+
                 serverOrgManager.markDead();
+
             }
         }
         return serverOrgManagers;
     }
-
     public void loadFitnessFunctions(){
         if(
-                fitnessManager != null ||
-                        ChaosCraft.config.trainingRoomNamespace == null ||
-                        ChaosCraft.config.trainingRoomUsernameNamespace == null
+            fitnessManager != null ||
+            ChaosCraft.config.trainingRoomNamespace == null ||
+            ChaosCraft.config.trainingRoomUsernameNamespace == null
         ){
             ChaosCraft.LOGGER.error("Not enough TrainingRoom Data set");
             return;
@@ -330,7 +326,7 @@ public class ChaosCraftServer {
             JSONParser parser = new JSONParser();
 
             JSONArray obj = (JSONArray) parser.parse(
-                    fitnessRulesRaw
+                fitnessRulesRaw
             );
             ChaosCraft.getServer().fitnessManager = new ChaosCraftFitnessManager();
             ChaosCraft.getServer().fitnessManager.parseData(obj);
@@ -359,7 +355,7 @@ public class ChaosCraftServer {
             ChaosCraft.LOGGER.error("ChaosServerThread  Error: " + message + " - statusCode: " + statusCode);
             exception.printStackTrace();
         }catch(Exception exception){
-            // ChaosCraft.getServer().consecutiveErrorCount += 1;
+           // ChaosCraft.getServer().consecutiveErrorCount += 1;
 
             ChaosCraft.LOGGER.error("ChaosServerThread Error: " + exception.getMessage() + " - exception type: " + exception.getClass().getName());
             // ChaosCraft.getClient().thread = null;//End should cover this
@@ -388,10 +384,10 @@ public class ChaosCraftServer {
     }
 
     public void removeEntityFromWorld(ServerOrgManager serverOrgManager) {
-        if(!organisms.containsKey(serverOrgManager.getCCNamespace())){
-            ChaosCraft.LOGGER.error("Server is trying to remove an org from its `organisims` but it is not there: " + serverOrgManager.getCCNamespace());
-            return;
-        }
+       if(!organisms.containsKey(serverOrgManager.getCCNamespace())){
+           ChaosCraft.LOGGER.error("Server is trying to remove an org from its `organisims` but it is not there: " + serverOrgManager.getCCNamespace());
+           return;
+       }
         organisms.remove(serverOrgManager.getCCNamespace());
     }
 
@@ -467,7 +463,9 @@ public class ChaosCraftServer {
         }
         ChaosCraftServerPlayerInfo serverPlayerInfo = userMap.get(player.getUniqueID().toString());
         serverPlayerInfo.state = message.getState();
+        serverPlayerInfo.getServerPlayerEntity().setGameType(GameType.SPECTATOR);
         if(serverPlayerInfo.state.equals(ChaosCraftServerPlayerInfo.State.ObservingActive)) {
+
             if (!organisms.containsKey(message.getOrgNamespace())) {
                 serverPlayerInfo.state = ChaosCraftServerPlayerInfo.State.None;
                 ChaosCraft.LOGGER.error("Could not set player observing state because find Organism:" + message.getOrgNamespace());
@@ -476,8 +474,9 @@ public class ChaosCraftServer {
             serverPlayerInfo.observingEntity = organisms.get(message.getOrgNamespace());
 
         }else if(serverPlayerInfo.state.equals(ChaosCraftServerPlayerInfo.State.None)) {
-            ServerPlayerEntity serverPlayerEntity  = server.getPlayerList().getPlayerByUUID(serverPlayerInfo.playerUUID);
-            serverPlayerEntity.setSpectatingEntity(null);
+            serverPlayerInfo.getServerPlayerEntity().setGameType(GameType.CREATIVE);
+                ServerPlayerEntity serverPlayerEntity  = server.getPlayerList().getPlayerByUUID(serverPlayerInfo.playerUUID);
+                serverPlayerEntity.setSpectatingEntity(null);
 
         }
         updateObservers();
@@ -488,7 +487,7 @@ public class ChaosCraftServer {
         ArrayList<ChaosCraftServerPlayerInfo> observingPlayers = new ArrayList<ChaosCraftServerPlayerInfo>();
         for (ChaosCraftServerPlayerInfo serverPlayerInfo : userMap.values()) {
             if(
-                    serverPlayerInfo.state.equals(ChaosCraftServerPlayerInfo.State.ObservingPassive)
+                serverPlayerInfo.state.equals(ChaosCraftServerPlayerInfo.State.ObservingPassive)
             ) {
                 observingPlayers.add(serverPlayerInfo);
             }else if( serverPlayerInfo.state.equals(ChaosCraftServerPlayerInfo.State.ObservingActive)) {
@@ -531,5 +530,18 @@ public class ChaosCraftServer {
             ChaosNetworkManager.sendTo(packet, observingPlayer.getServerPlayerEntity());
         }
 
+    }
+
+    public ServerOrgManager findOrgThatAlteredBlock(BlockPos blockPos) {
+        for (ServerOrgManager serverOrgManager : organisms.values()) {
+            if(serverOrgManager.getEntity() != null) {
+                for (AlteredBlockInfo alteredBlock : serverOrgManager.getEntity().alteredBlocks) {
+                    if (alteredBlock.blockPos.equals(blockPos)) {
+                        return serverOrgManager;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }
