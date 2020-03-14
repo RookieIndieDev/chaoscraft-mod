@@ -275,7 +275,6 @@ public class ChaosCraftServer {
 
         List<ServerOrgManager> serverOrgManagers = getOrgsWithState(ServerOrgManager.State.Ticking);
         for (ServerOrgManager serverOrgManager : serverOrgManagers) {
-
             if (!serverOrgManager.getEntity().isAlive()) {
                 if(ChaosCraft.buildAreas.size() > 0){
                     BuildArea orgBuildArea = new BuildArea();
@@ -302,9 +301,7 @@ public class ChaosCraftServer {
                     orgBuildArea.resetBlockPlacedCount();
                     BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildaAreaEntity().getPos(), orgBuildArea.getBuildaAreaEntity().getWorld());
                 }
-
                 serverOrgManager.markDead();
-
             }
         }
         return serverOrgManagers;
