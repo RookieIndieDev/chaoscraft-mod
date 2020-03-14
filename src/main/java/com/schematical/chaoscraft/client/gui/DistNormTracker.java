@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.schematical.chaoscraft.ChaosCraft;
 import com.schematical.chaoscraft.blocks.ChaosBlocks;
 import com.schematical.chaoscraft.util.BuildArea;
+import com.schematical.chaoscraft.util.NoveltyHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
@@ -27,12 +28,16 @@ public class DistNormTracker extends AbstractGui {
                 }
             }
             */
-
+            /*
             for(int i = 0; i < ChaosBlocks.markerBlocks.size(); i++)
             {
                 fontrenderer.drawString("Score :" + ChaosCraft.buildAreas.get(i).getScore(), 15, (25 * i) + 25, 14737632);
                 fontrenderer.drawString("Norm of Area " + (i + 1) + " " + ChaosCraft.buildAreas.get(i).getAreamatrixNorm(), 15, (35 * i) + 35, 14737632);
             }
+             */
+            fontrenderer.drawString("Average Norm: " + NoveltyHelper.getAverage(), 15, 15, 14737632);
+            fontrenderer.drawString("Highest Novelty: " + NoveltyHelper.getHighestNovelty(), 15, 25, 14737632);
+            fontrenderer.drawString("Novel Org: " + NoveltyHelper.getMostNovelOrg(), 15, 35, 14737632);
         }
         RenderSystem.popMatrix();
     }

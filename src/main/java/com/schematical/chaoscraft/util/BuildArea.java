@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.shapes.NonOverlappingMerger;
 import org.apache.commons.math3.*;
 import org.apache.commons.math3.linear.*;
 import org.apache.commons.math3.ml.distance.EuclideanDistance;
@@ -103,10 +104,12 @@ public class BuildArea{
         switch(block){
                 case "Block{minecraft:oak_planks}":
                     areaMatrices[areaMatrixIndex].getDataRef()[row][col] = 8.0;
+                    /*
                     blockPlacedCount += 1;
                     if(blockPlacedCount < maxBlockCount){
                         score += 1;
                     }
+                     */
                     break;
 
                 case "Block{minecraft:air}":
@@ -115,10 +118,12 @@ public class BuildArea{
 
                 case "Block{minecraft:oak_door}":
                     areaMatrices[areaMatrixIndex].getDataRef()[row][col] = 10.0;
+                    /*
                     blockPlacedCount += 1;
                     if(blockPlacedCount < maxBlockCount){
                         score += 0.5;
                     }
+                     */
                     break;
         }
     }
@@ -180,29 +185,42 @@ public class BuildArea{
     }
 
     public double getScore(){
+        int novelty = 0;
+        int average = 0;
+        int totalNorm = 0;
+
+        //if(score > 0){
+            totalNorm = getAreaNorms();
+            NoveltyHelper.addToArchive(totalNorm);
+            novelty = NoveltyHelper.getNovelty(totalNorm);
+            if(novelty > NoveltyHelper.getHighestNovelty()){
+                NoveltyHelper.setHighestNovelty(novelty);
+                NoveltyHelper.setMostNovelOrg(getCurrentServerOrgManager().getCCNamespace());
+            }
+            score += novelty;
+        //}
+
         for(int i = 0; i < templates.length; i++){
             double diff = calculateDifference(templates[i], areaMatrices[i]);
             if(diff == 0){
                 score += 100;
             }
-            else if (diff <= 8 && diff > 0)
-            {
+            else if (diff <= 8 && diff > 0) {
                 score += 75;
             }
         }
-
         return score;
+    }
+
+    private int getAreaNorms(){
+        int norm = 0;
+        for(Array2DRowRealMatrix area : areaMatrices){
+            norm += area.getNorm();
+        }
+        return  norm;
     }
 
     public void resetScore(){
         score = 0.0;
-    }
-
-    public double getDiffNorm(){
-        return templates[0].subtract(areaMatrices[0]).getNorm();
-    }
-
-    public double getAreamatrixNorm(){
-        return areaMatrices[0].getNorm();
     }
 }

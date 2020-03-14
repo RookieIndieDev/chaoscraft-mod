@@ -16,9 +16,12 @@ import com.schematical.chaoscraft.util.BuildArea;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.GameType;
@@ -238,7 +241,8 @@ public class ChaosCraftServer {
         orgEntity.setDesiredYaw(yaw);
         orgEntity.setLocationAndAngles(pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
 
-
+        orgEntity.setHeldItem(Hand.MAIN_HAND, new ItemStack(Blocks.OAK_PLANKS, 64));
+        orgEntity.orgInventory.set(1, new ItemStack(Blocks.OAK_DOOR, 64));
         serverOrgManager.attachOrgEntity(orgEntity);
         serverWorld.summonEntity(orgEntity);
 

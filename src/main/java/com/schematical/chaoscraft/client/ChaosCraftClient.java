@@ -52,10 +52,12 @@ public class ChaosCraftClient {
     private Minecraft minecraft;
     private ChaosPlayerNeuronTestScreen chaosPlayerNeuronTestScreen;
     private ChaosObserveOverlayScreen chaosObserveOverlayScreen;
+    private DistNormTracker distNormTracker;
 
     public ChaosCraftClient(Minecraft minecraft) {
         this.minecraft = minecraft;
         chaosObserveOverlayScreen = new ChaosObserveOverlayScreen(this.minecraft);
+        distNormTracker = new DistNormTracker();
     }
 
     public ChaosCraftServerPlayerInfo.State getObservationState(){
@@ -85,6 +87,10 @@ public class ChaosCraftClient {
         }
         if(!observationState.equals(ChaosCraftServerPlayerInfo.State.None)){
             chaosObserveOverlayScreen.render();
+        }
+
+        if(distNormTracker != null){
+           distNormTracker.render();
         }
     }
     public void setTrainingRoomInfo(ServerIntroInfoPacket serverInfo) {
