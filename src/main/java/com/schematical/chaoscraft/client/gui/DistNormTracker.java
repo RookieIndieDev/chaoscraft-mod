@@ -38,6 +38,7 @@ public class DistNormTracker extends AbstractGui {
             fontrenderer.drawString("Average Norm: " + NoveltyHelper.getAverage(), 15, 15, 14737632);
             fontrenderer.drawString("Highest Novelty: " + NoveltyHelper.getHighestNovelty(), 15, 25, 14737632);
             fontrenderer.drawString("Novel Org: " + NoveltyHelper.getMostNovelOrg(), 15, 35, 14737632);
+            //fontrenderer.drawString("Norm: " + ChaosCraft.buildAreas.get(0).getAreaNorms(), 15, 15, 14737632);
         }
         RenderSystem.popMatrix();
     }

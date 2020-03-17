@@ -292,9 +292,6 @@ public class ChaosCraftServer {
                     buildEvent.entity = serverOrgManager.getEntity();
                     orgBuildArea.getBlocks(orgBuildArea.getBuildaAreaEntity().getPos());
                     buildEvent.amount = (int) orgBuildArea.getScore();
-                    if(buildEvent.amount > 0){
-                        ChaosCraft.LOGGER.info(serverOrgManager.getEntity().getCCNamespace() + " got a score of: " + buildEvent.amount);
-                    }
                     buildEvent.eventType = CCWorldEvent.Type.BUILD_COMPLETE;
                     serverOrgManager.getEntity().entityFitnessManager.test(buildEvent);
                     orgBuildArea.resetScore();
