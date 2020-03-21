@@ -154,9 +154,8 @@ public class BuildArea{
             novelty = NoveltyHelper.getNovelty(totalNorm);
             if(novelty > NoveltyHelper.getHighestNovelty()){
                 NoveltyHelper.setHighestNovelty(novelty);
-                NoveltyHelper.setMostNovelOrg(getCurrentServerOrgManager().getCCNamespace());
+                score += novelty;
             }
-            score += novelty;
         }
 
         for(int i = 0; i < templates.length; i++){

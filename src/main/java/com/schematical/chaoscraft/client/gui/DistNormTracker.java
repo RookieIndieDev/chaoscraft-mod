@@ -35,9 +35,11 @@ public class DistNormTracker extends AbstractGui {
                 fontrenderer.drawString("Norm of Area " + (i + 1) + " " + ChaosCraft.buildAreas.get(i).getAreamatrixNorm(), 15, (35 * i) + 35, 14737632);
             }
              */
-            fontrenderer.drawString("Average Norm: " + NoveltyHelper.getAverage(), 15, 15, 14737632);
-            fontrenderer.drawString("Highest Novelty: " + NoveltyHelper.getHighestNovelty(), 15, 25, 14737632);
-            fontrenderer.drawString("Novel Org: " + NoveltyHelper.getMostNovelOrg(), 15, 35, 14737632);
+            fontrenderer.drawString("Average Norm: " + NoveltyHelper.getAverage(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 20), 14737632);
+            fontrenderer.drawString("Highest Novelty: " + NoveltyHelper.getHighestNovelty(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 30), 14737632);
+            fontrenderer.drawString("Novelty Archive Average: " + NoveltyHelper.getAverageNovelty(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 40), 14737632);
+            fontrenderer.drawString("Archive Size " + NoveltyHelper.getArchiveSize(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 50), 14737632);
+            //fontrenderer.drawString("Novel Org: " + NoveltyHelper.getMostNovelOrg(), 15, 35, 14737632);
             //fontrenderer.drawString("Norm: " + ChaosCraft.buildAreas.get(0).getAreaNorms(), 15, 15, 14737632);
         }
         RenderSystem.popMatrix();
