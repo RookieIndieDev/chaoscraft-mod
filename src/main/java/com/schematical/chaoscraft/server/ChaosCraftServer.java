@@ -306,6 +306,7 @@ public class ChaosCraftServer {
         }
         return serverOrgManagers;
     }
+
     public void loadFitnessFunctions(){
         if(
             fitnessManager != null ||
