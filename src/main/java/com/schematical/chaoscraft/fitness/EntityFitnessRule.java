@@ -15,8 +15,6 @@ import org.json.simple.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
-
 /**
  * Created by user1a on 1/4/19.
  */
@@ -59,9 +57,10 @@ public class EntityFitnessRule {
     }
 
     public EntityFitnessScoreEvent testWorldEvent(CCWorldEvent event) {
-            if(!eventType.equals(event.eventType.toString())) {
-                return null;
-            }
+        if(!eventType.equals(event.eventType.toString())) {
+            return null;
+        }
+
 
         if(
             attributeId != null &&
@@ -95,7 +94,7 @@ public class EntityFitnessRule {
                    break;
                case(Enum.ITEM_ID):
                    if(event.item == null){
-                       LOGGER.error("No `item` to check against!");
+                       ChaosCraft.LOGGER.error("No `item` to check against!");
                    }
                    resourceLocation = event.item.getRegistryName();
                    String itemId = resourceLocation.getNamespace() + ":" + resourceLocation.getPath();
@@ -104,13 +103,13 @@ public class EntityFitnessRule {
                    if(!attributeValue.contains(itemId)){
                        return null;
                    }else{
-                       LOGGER.info("Item Pickup Check Success: " + itemId);
+                       //ChaosCraft.LOGGER.info("Item Pickup Check Success: " + itemId);
                    }
                    break;
 
                case(Enum.AXIS):
                    if(event.axis == null){
-                       LOGGER.error("No `axis` to check against!");
+                       ChaosCraft.LOGGER.error("No `axis` to check against!");
                    }
 
 
@@ -123,7 +122,7 @@ public class EntityFitnessRule {
                    break;
                case(Enum.BLOCK_TOUCH_STATE):
                    if(event.position == null){
-                       LOGGER.error("No `position` to check against!");
+                       ChaosCraft.LOGGER.error("No `position` to check against!");
                    }
 
 
@@ -135,7 +134,7 @@ public class EntityFitnessRule {
                    break;
 
                default:
-                   LOGGER.error("Invalid `attributeId`: " + attributeId);
+                   ChaosCraft.LOGGER.error("Invalid `attributeId`: " + attributeId);
                    return null;
            }
         }

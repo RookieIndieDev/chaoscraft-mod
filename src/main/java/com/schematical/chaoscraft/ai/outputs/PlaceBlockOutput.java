@@ -1,13 +1,10 @@
 package com.schematical.chaoscraft.ai.outputs;
 
 import com.schematical.chaoscraft.ai.OutputNeuron;
-import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3i;
-
-import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
 
 /**
  * Created by user1a on 12/8/18.
@@ -29,8 +26,7 @@ public class PlaceBlockOutput extends OutputNeuron {
             return;
         }
 
-        Vec3i vec3i = rayTraceResult.getFace().getDirectionVec();
-        BlockPos destBlockPos = rayTraceResult.getPos().add(vec3i);
+
 
         nNet.entity.rightClick(rayTraceResult);
 

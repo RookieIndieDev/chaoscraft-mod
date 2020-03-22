@@ -7,29 +7,24 @@ import com.schematical.chaoscraft.ai.CCObserviableAttributeCollection;
 import com.schematical.chaoscraft.ai.NeuralNet;
 import com.schematical.chaoscraft.ai.OutputNeuron;
 import com.schematical.chaoscraft.client.ClientOrgManager;
-import com.schematical.chaoscraft.client.gui.ChaosNNetViewOverlayGui;
-import com.schematical.chaoscraft.client.gui.ChaosOrgDetailOverlayGui;
 import com.schematical.chaoscraft.events.CCWorldEvent;
 import com.schematical.chaoscraft.events.OrgEvent;
 import com.schematical.chaoscraft.fitness.EntityFitnessManager;
 import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
-import com.schematical.chaoscraft.server.ChaosCraftServerPlayerInfo;
+import com.schematical.chaoscraft.network.packets.CCInventoryChangeEventPacket;
 import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaosnet.model.ChaosNetException;
-import com.schematical.chaosnet.model.Organism;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.CraftingTableBlock;
 import net.minecraft.block.material.Material;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.*;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
@@ -39,7 +34,6 @@ import net.minecraft.item.crafting.RecipeItemHelper;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldType;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ObjectHolder;
@@ -48,7 +42,6 @@ import org.json.simple.JSONObject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
 
 public class OrgEntity extends MobEntity {
 
@@ -56,7 +49,7 @@ public class OrgEntity extends MobEntity {
     public static final EntityType<OrgEntity> ORGANISM_TYPE = null;
     public final double REACH_DISTANCE = 5.0D;
 
-    public final NonNullList<ItemStack> orgInventory = NonNullList.withSize(36, ItemStack.EMPTY);
+    //public final NonNullList<ItemStack> orgInventory = NonNullList.withSize(36, ItemStack.EMPTY);
     public EntityFitnessManager entityFitnessManager;
 
     protected CCPlayerEntityWrapper playerWrapper;
@@ -67,39 +60,41 @@ public class OrgEntity extends MobEntity {
     protected ClientOrgManager clientOrgManager = null;
 
     //The current selected item
-    private int currentItem = 0;
-    protected ItemStackHandler itemHandler = new ItemStackHandler();
+    private int selectedItemIndex = 0;
+    protected ItemStackHandler itemHandler = new ItemStackHandler(36);
     protected double desiredPitch;
     protected double desiredYaw;
     protected double desiredHeadYaw;
-    //Whether the bot has tried left clicking last tick.
-    private boolean lastTickLeftClicked;
+
+
 
     //Mining related variables
-    private float hardness = 0;
+
     private BlockPos lastMinePos = BlockPos.ZERO;
-    private int blockSoundTimer;
+
 
     private int miningTicks = 0;
 
     public List<AlteredBlockInfo> alteredBlocks = new ArrayList<AlteredBlockInfo>();
-    private int equippedSlot = -1;
-    private int rightClickDelay;
+
+
 
     protected NeuralNet nNet;
 
-    private int selectedItemIndex;
+
     private boolean hasTraveled = false;
     private Vec3d spawnPos;
     private int ticksSinceObservationHack = -1;
 
     private int spawnHash;
     private Vec3d desiredLookVec = null;
+    private int rightClickDelay;
 
 
     public OrgEntity(EntityType<? extends MobEntity> type, World world) {
         super((EntityType<? extends MobEntity>) type, world);
         //setHealth(1);
+        //itemHandler.setStackInSlot(3, new ItemStack(Items.OAK_PLANKS, 12));
     }
     public void setSpawnHash(int _spawnHash) {
         this.spawnHash = _spawnHash;
@@ -161,7 +156,7 @@ public class OrgEntity extends MobEntity {
     }
 
 
-    public ItemStackHandler getItemStack(){
+    public ItemStackHandler getItemStackHandeler(){
         return this.itemHandler;
     }
     @Override
@@ -253,7 +248,20 @@ public class OrgEntity extends MobEntity {
             return false;
         }
         RecipeItemHelper recipeItemHelper = getRecipeItemHelper();
-
+        boolean isUsingCraftingTable = false;
+        BlockRayTraceResult rayTraceResult = nNet.entity.rayTraceBlocks(nNet.entity.REACH_DISTANCE);
+        if(world.getBlockState(rayTraceResult.getPos()).getBlock() instanceof CraftingTableBlock){
+             isUsingCraftingTable = true;
+        }
+        if(!isUsingCraftingTable) {
+            if (!recipe.canFit(2, 2)) {
+                return false;
+            }
+        }else{
+            if (!recipe.canFit(3, 3)) {
+                return false;
+            }
+        }
         boolean result = recipeItemHelper.canCraft(recipe, null);
 
         return result;
@@ -264,8 +272,8 @@ public class OrgEntity extends MobEntity {
         RecipeItemHelper recipeItemHelper = new RecipeItemHelper();
 
 
-        for(int i = 0; i < orgInventory.size(); i++) {
-            ItemStack itemStack = orgInventory.get(i);
+        for(int i = 0; i < itemHandler.getSlots(); i++) {
+            ItemStack itemStack = itemHandler.getStackInSlot(i);
 
             if(!itemStack.isEmpty()){
                 recipeItemHelper.accountStack(itemStack);
@@ -278,36 +286,43 @@ public class OrgEntity extends MobEntity {
 
 
     public ItemStack craft(IRecipe recipe) {
+        if(!nNet.entity.canCraft(recipe)){
+            throw new ChaosNetException("Cannot craft " + recipe.getId().toString());
+        }
         NonNullList<Ingredient> recipeItems = null;
-      /*  if(recipe instanceof ShapedRecipes) {
-            recipeItems = ((ShapedRecipes) recipe).recipeItems;
-        }else if(recipe instanceof ShapelessRecipes) {
-            recipeItems = ((ShapelessRecipes) recipe).recipeItems;
-        }else{
-            throw new ChaosNetException("Found a recipe unaccounted for: " + recipe.getType().toString() + "Class Name: " +  recipe.getClass().getName());
-        }*/
+
         recipeItems = recipe.getIngredients();
         //Check to see if they have the items in inventory for that
-        RecipeItemHelper recipeItemHelper = new RecipeItemHelper();
-        int slots = orgInventory.size();
-        int emptySlot = -1;
 
-        List<Integer> usedSlots = new ArrayList<Integer>();
+        int slots = itemHandler.getSlots();
+        int emptySlotIndex = -1;
+
+
         for(Ingredient ingredient: recipeItems) {
 
             for (int i = 0; i < slots; i++) {
-                ItemStack itemStack = orgInventory.get(i);
+                ItemStack itemStack = itemHandler.getStackInSlot(i);
                 if(itemStack.isEmpty()) {
-                    emptySlot = i;
+                    emptySlotIndex = i;
                 }else{
                     int packedItem = RecipeItemHelper.pack(itemStack);
                     IntList ingredientItemIds = ingredient.getValidItemStacksPacked();
                     if (ingredientItemIds.contains(packedItem)) {
-                        //int amountTaken = recipeItemHelper.tryTake(packedItem, 1);
-                        if (orgInventory.get(i).getCount() < 1) {
+
+                        if (itemHandler.getStackInSlot(i).getCount() < 1) {
                             throw new ChaosNetException("Cannot get any more of these");
                         }
-                        orgInventory.remove(i);
+                        itemHandler.setStackInSlot(i, ItemStack.EMPTY);
+                        if(i == selectedItemIndex){
+                            setHeldItem(Hand.MAIN_HAND, ItemStack.EMPTY);
+                        }
+                        CCInventoryChangeEventPacket pkt = new CCInventoryChangeEventPacket(
+                                getCCNamespace(),
+                                selectedItemIndex,
+                                i,
+                                itemHandler.getStackInSlot(i)
+                        );
+                        ChaosNetworkManager.sendTo(pkt, getServerOrgManager().getServerPlayerEntity());
                     }
                 }
 
@@ -318,8 +333,19 @@ public class OrgEntity extends MobEntity {
 
         ItemStack outputStack = recipe.getRecipeOutput().copy();
         //ChaosCraft.logger.info(this.getCCNamespace() + " - Crafted: " + outputStack.getDisplayName());
-        if(emptySlot != -1) {
-            orgInventory.add(emptySlot, outputStack);
+        if(emptySlotIndex != -1) {
+            itemHandler.setStackInSlot(emptySlotIndex,outputStack);//        orgInventory.add(emptySlotIndex, outputStack);
+            if(getHeldItem(Hand.MAIN_HAND).isEmpty()){
+                emptySlotIndex = selectedItemIndex;
+                setHeldItem(Hand.MAIN_HAND, outputStack);
+            }
+            CCInventoryChangeEventPacket pkt = new CCInventoryChangeEventPacket(
+                    getCCNamespace(),
+                    selectedItemIndex,
+                    emptySlotIndex,
+                    itemHandler.getStackInSlot(emptySlotIndex)
+            );
+            ChaosNetworkManager.sendTo(pkt, getServerOrgManager().getServerPlayerEntity());
             observableAttributeManager.ObserveCraftableRecipes(this);
         }else{
 
@@ -330,10 +356,7 @@ public class OrgEntity extends MobEntity {
         return outputStack;
     }
     public ItemStack getStackInSlot( EquipmentSlotType slotIn) throws Exception {
-        if (slotIn == EquipmentSlotType.MAINHAND) {
-            return this.orgInventory.get(currentItem);
-        }
-        throw new Exception("TODO: Build inventory for :" + slotIn.getName());
+        return this.itemHandler.getStackInSlot(slotIn.getSlotIndex());
     }
 
     public BlockRayTraceResult rayTraceBlocks(double blockReachDistance) {
@@ -450,18 +473,18 @@ public class OrgEntity extends MobEntity {
         //ChaosCraft.LOGGER.info(this.getCCNamespace() + " - Trying to replace blocks - Count: " + alteredBlocks.size());
         for (AlteredBlockInfo alteredBlock : alteredBlocks) {
             boolean bool = world.setBlockState(alteredBlock.blockPos, alteredBlock.state, world.isRemote ? 11 : 3);
-            String debugText = this.getCCNamespace() + " - Replacing: " + alteredBlock.state.getBlock().getRegistryName();
+            /*String debugText = this.getCCNamespace() + " - Replacing: " + alteredBlock.state.getBlock().getRegistryName();
             if (bool) {
                 ChaosCraft.LOGGER.info(debugText + " - Success");
             }else{
                 ChaosCraft.LOGGER.info(debugText + " - Fail");
-            }
+            }*/
         }
         alteredBlocks.clear();
     }
     public ItemStack equip(String resourceId) {
 
-        ItemStackHandler itemStackHandler = getItemStack();
+        ItemStackHandler itemStackHandler = getItemStackHandeler();
         int slots = itemStackHandler.getSlots();
         for(int i = 0; i < slots; i++) {
             ItemStack itemStack = itemStackHandler.getStackInSlot(i);
@@ -472,7 +495,16 @@ public class OrgEntity extends MobEntity {
                     observiableAttributeCollection.resourceId.equals(resourceId)
                 ){
                     this.setHeldItem(Hand.MAIN_HAND, itemStack);
-                    equippedSlot = i;
+                    selectedItemIndex = i;
+
+                    CCInventoryChangeEventPacket pkt = new CCInventoryChangeEventPacket(
+                            getCCNamespace(),
+                            selectedItemIndex,
+                            selectedItemIndex,
+                            itemHandler.getStackInSlot(selectedItemIndex)
+                    );
+                    ChaosNetworkManager.sendTo(pkt, getServerOrgManager().getServerPlayerEntity());
+
                     return itemStack;
                 }
             }
@@ -484,8 +516,8 @@ public class OrgEntity extends MobEntity {
         //Check if it is in their inventory
         ItemStack stack = null;
         int slot = -1;
-        for (int i = 0; i < this.orgInventory.size(); i++) {
-            ItemStack checkStack = this.orgInventory.get(i);
+        for (int i = 0; i < this.itemHandler.getSlots(); i++) {
+            ItemStack checkStack = this.itemHandler.getStackInSlot(i);
             Item _item = checkStack.getItem();
 
             if(_item.getRegistryName().toString().equals(itemId)){
@@ -500,7 +532,7 @@ public class OrgEntity extends MobEntity {
     }
 
     public void rightClick(BlockRayTraceResult result) {
-        this.rightClickDelay = 4;
+
         for (Hand hand : Hand.values()) {
 
 
@@ -513,9 +545,9 @@ public class OrgEntity extends MobEntity {
 
                 if (enumactionresult == ActionResultType.SUCCESS) {
                     this.swingArm(hand);
-
+                    BlockState newBlockState = this.world.getBlockState(blockpos.offset(result.getFace()));
                     CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.BLOCK_PLACED);
-                    worldEvent.block = state.getBlock();
+                    worldEvent.block = newBlockState.getBlock();
                     entityFitnessManager.test(worldEvent);
                     return;
                 }
@@ -654,8 +686,8 @@ public class OrgEntity extends MobEntity {
                 vec3d1.z * 5d
             )
         );
-        equippedSlot = 0;//TODO: fix this
-         itemHandler.extractItem(equippedSlot, itemStack.getCount(), false);
+
+         itemHandler.extractItem(selectedItemIndex, itemStack.getCount(), false);
 
         this.setHeldItem(Hand.MAIN_HAND, ItemStack.EMPTY);
         ItemStack itemStackCheck = this.getHeldItem(Hand.MAIN_HAND);
@@ -665,6 +697,17 @@ public class OrgEntity extends MobEntity {
         ItemEntity entityItem = new ItemEntity(world, itemVec3d.x, itemVec3d.y, itemVec3d.z);
         entityItem.setItem(itemStack);
         world.getServer().getWorld(DimensionType.OVERWORLD).summonEntity(entityItem);
+
+
+        CCInventoryChangeEventPacket pkt = new CCInventoryChangeEventPacket(
+                getCCNamespace(),
+                selectedItemIndex,
+                selectedItemIndex,
+                itemHandler.getStackInSlot(selectedItemIndex)
+        );
+        ChaosNetworkManager.sendTo(pkt, getServerOrgManager().getServerPlayerEntity());
+
+
         ChaosCraft.LOGGER.info(this.getCCNamespace() + " - Tossed item: " + itemStack.getItem().getItem().getRegistryName() + " now holding " + itemStackCheck.getItem().getRegistryName());
         return itemStack;
     }
@@ -696,7 +739,7 @@ public class OrgEntity extends MobEntity {
 
             if(this.serverOrgManager != null) {
                 this.checkHasTraveled();
-                this.serverOrgManager.tickServer();
+                this.serverOrgManager.tickOrg();
                 this.updatePitchAndYaw();
                 this.checkForItemPickup();
             }else{
@@ -824,10 +867,12 @@ public class OrgEntity extends MobEntity {
             }
         }
     }
-
+    public ItemStackHandler getItemHandler(){
+        return itemHandler;
+    }
     public void pickupItem(ItemEntity item) {
         if (item.cannotPickup()) return;
-        ChaosCraft.LOGGER.info(this.getCCNamespace() + " - Picked up: " + item.getItem().getItem().getRegistryName());
+        //ChaosCraft.LOGGER.info(this.getCCNamespace() + " - Picked up: " + item.getItem().getItem().getRegistryName());
         ItemStack stack = item.getItem();
 
         Item worldEventItem = stack.getItem();
@@ -835,14 +880,20 @@ public class OrgEntity extends MobEntity {
         for (int i = 0; i < this.itemHandler.getSlots() && !stack.isEmpty(); i++) {
             if(getHeldItemMainhand().getItem() == Item.getItemById(0)) {
                 this.setHeldItem(Hand.MAIN_HAND, stack);
-                equippedSlot = i;
+                selectedItemIndex = i;
             }
 
             stack = this.itemHandler.insertItem(i, stack, false);
 
 
 
-            this.selectedItemIndex = i;
+            CCInventoryChangeEventPacket pkt = new CCInventoryChangeEventPacket(
+                    getCCNamespace(),
+                    i,
+                    selectedItemIndex,
+                    this.itemHandler.getStackInSlot(i)
+            );
+            ChaosNetworkManager.sendTo(pkt, getServerOrgManager().getServerPlayerEntity());
 
             //PacketHandler.INSTANCE.sendToAllTracking(new SyncHandsMessage(this.itemHandler.getStackInSlot(i), getEntityId(), i, selectedItemIndex), this);
         }
@@ -982,5 +1033,10 @@ public class OrgEntity extends MobEntity {
 
     public void setDesiredLookPosition(Vec3d newPos) {
         this.desiredLookVec = newPos;
+    }
+
+    public void updateInventory(int index, ItemStack itemStack, int selectedItemIndex) {
+        this.itemHandler.setStackInSlot(index, itemStack);
+        this.selectedItemIndex = selectedItemIndex;
     }
 }

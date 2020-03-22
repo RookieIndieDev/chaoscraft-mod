@@ -66,19 +66,22 @@ public class CraftOutput extends OutputNeuron {
         }*/
 
        //ChaosCraft.logger.info("Attempting to Craft: " + recipe.getRegistryName().toString());
-        ItemStack outputStack = null;
-
-        outputStack = nNet.entity.craft(recipe);
-
+         ItemStack outputStack = null;
+        try {
+            outputStack = nNet.entity.craft(recipe);
+        }catch(ChaosNetException e){
+            ChaosCraft.LOGGER.error(e.getMessage() + " - server is slightly out of sync");
+            return;
+        }
         if(outputStack == null){
             throw new ChaosNetException("Something went wrong crafting: " + recipe.getType().toString() + " this should not be possible with the `evaluate` check above");
         }
 
-        CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.CRAFT);
+        CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.ITEM_CRAFTED);
         worldEvent.item = outputStack.getItem();
         nNet.entity.entityFitnessManager.test(worldEvent);
         //TODO: Move this to a GUI thing.
-        String message = nNet.entity.getCCNamespace() +" Crafted Recipe: " + recipe.getType().toString() + " - Item: " + worldEvent.item.getRegistryName();
+        //String message = nNet.entity.getCCNamespace() +" Crafted Recipe: " + recipe.getType().toString() + " - Item: " + worldEvent.item.getRegistryName();
 
     }
     @Override

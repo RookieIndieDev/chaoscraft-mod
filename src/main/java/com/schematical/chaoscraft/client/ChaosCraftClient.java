@@ -262,7 +262,7 @@ public class ChaosCraftClient {
         if(!state.equals(State.Authed)){
             return;
         }
-      /*  if(true){
+        /*if(true){
             return;
         }*/
         checkForDeadOrgs();
@@ -499,6 +499,13 @@ public class ChaosCraftClient {
         if(chaosPlayerNeuronTestScreen != null){
             chaosPlayerNeuronTestScreen.setObservedEntity(message, clientOrgManager);
         }
+    }
+
+    public void stir() {
+        //Iterate through all creatures
+
+        //Send message to server
+
     }
 
     public enum State{

@@ -97,6 +97,7 @@ public class CCClientActionPacket {
                 if( pkt.entity == null){
                    throw new ChaosNetException("CCClientActionPacket = Could not find entity: " + UUID.fromString(obj.get("entity").toString()));
                 }
+
             }else if(obj.get("blockPos") != null){
                 String[] parts = obj.get("blockPos").toString().split(",");
                 pkt.blockPos = new BlockPos(
@@ -110,9 +111,15 @@ public class CCClientActionPacket {
             }
             if(obj.get("biology") != null){
                 ServerOrgManager serverOrgManager = ChaosCraft.getServer().getOrgByNamespace(pkt.orgNamespace);
-                if(serverOrgManager== null){
+                if(serverOrgManager == null){
 
                     throw new ChaosNetException("No valid organism found with namespace: " + pkt.orgNamespace);
+                }
+                if(serverOrgManager.getEntity() == null){
+                    throw new ChaosNetException("CCClientActionPacket - Entity does not exist: " + UUID.fromString(obj.get("entity").toString()));
+                }
+                if(!serverOrgManager.getEntity().isAlive()){
+                    throw new ChaosNetException("CCClientActionPacket - Entity is dead: " + UUID.fromString(obj.get("entity").toString()));
                 }
                 NeuralNet neuralNet = serverOrgManager.getNNet();
                 pkt.biologyBase = neuralNet.getBiology(obj.get("biology").toString());
@@ -150,7 +157,9 @@ public class CCClientActionPacket {
                 if(message.action.equals(Action.SET_TARGET)){
                     CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.TARGET_SELECTED);
                     TargetSlot targetSlot = (TargetSlot)message.biologyBase;
-
+                    if(targetSlot == null){
+                        throw new ChaosNetException("No `TargetSlot` found.");
+                    }
                     if(message.entity != null) {
                         targetSlot.setTarget(message.entity);
                         worldEvent.entity = message.entity;

@@ -123,6 +123,9 @@ public class ChaosCraftServer {
 */
             }
         }
+        for (ServerOrgManager serverOrgManager : organisms.values()) {
+            serverOrgManager.longServerTick();
+        }
         cleanUp();
         longTickCount = 0;
     }
@@ -423,6 +426,7 @@ public class ChaosCraftServer {
         }
     }
     public void repair(){
+        //TODO: Remove this server cannot repair
         try{
 
             PostUsernameTrainingroomsTrainingroomSessionsSessionRepairRequest request = new PostUsernameTrainingroomsTrainingroomSessionsSessionRepairRequest();
