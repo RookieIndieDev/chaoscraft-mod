@@ -1,16 +1,11 @@
 package com.schematical.chaoscraft.client.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.schematical.chaoscraft.ChaosCraft;
 import com.schematical.chaoscraft.blocks.ChaosBlocks;
-import com.schematical.chaoscraft.util.BuildArea;
 import com.schematical.chaoscraft.util.NoveltyHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
 
 public class DistNormTracker extends AbstractGui {
     private FontRenderer fontrenderer;
@@ -44,5 +39,4 @@ public class DistNormTracker extends AbstractGui {
         }
         RenderSystem.popMatrix();
     }
-
 }

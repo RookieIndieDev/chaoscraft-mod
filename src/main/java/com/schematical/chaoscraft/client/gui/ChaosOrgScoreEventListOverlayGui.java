@@ -3,12 +3,13 @@ package com.schematical.chaoscraft.client.gui;
 import com.schematical.chaoscraft.ai.biology.BiologyBase;
 import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.network.packets.CCServerScoreEventPacket;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -60,6 +61,4 @@ public class ChaosOrgScoreEventListOverlayGui extends Screen {
         }
         super.render(p_render_1_, p_render_2_, p_render_3_);
     }
-
-
 }

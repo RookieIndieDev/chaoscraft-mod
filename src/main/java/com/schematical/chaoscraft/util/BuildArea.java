@@ -10,7 +10,6 @@ import org.apache.commons.math3.util.FastMath;
 
 import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
 
-
 public class BuildArea{
     public Array2DRowRealMatrix[] templates = new Array2DRowRealMatrix[4];
     public Array2DRowRealMatrix[] areaMatrices = new Array2DRowRealMatrix[4];
