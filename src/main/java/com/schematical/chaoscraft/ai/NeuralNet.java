@@ -1,5 +1,6 @@
 package com.schematical.chaoscraft.ai;
 
+import com.schematical.chaoscraft.Enum;
 import com.schematical.chaoscraft.ai.biology.BiologyBase;
 
 import com.schematical.chaoscraft.entities.OrgEntity;
@@ -31,7 +32,7 @@ public class NeuralNet {
     }
     public List<OutputNeuron> evaluate(EvalGroup targetEvalGroup){
         if(currentTargetEvalGroup != null){
-            throw new ChaosNetException("Dobule eval - Two processes are calling eval at once or you forgot to set `currentTargetEvalGroup` to null when you are done");
+            throw new ChaosNetException("Double eval - Two processes are calling eval at once or you forgot to set `currentTargetEvalGroup` to null when you are done");
         }
         currentTargetEvalGroup = targetEvalGroup;
         HashMap<String, OutputGroupResult> outputGroupResults = new HashMap<String, OutputGroupResult>();
@@ -171,12 +172,97 @@ public class NeuralNet {
         }
         return biologies;
     }
+
     private class OutputGroupResult{
         public float highScore;
         public OutputNeuron highNeuron;
     }
     public enum EvalGroup{
         DEFAULT,
-        TARGET
+        TARGET,
+        ITEM,
+        ACTION;
+    }
+
+
+
+
+
+
+
+
+    public void randomAddNewNeurons( ArrayList<NeuronBase> newNeurons){
+        Iterator<NeuronBase> iterator2 = newNeurons.iterator();
+
+        while (iterator2.hasNext()){
+
+            NeuronBase neuronBase = iterator2.next();
+            neuronBase.id = "rtneat-" + neurons.size();
+            neuronBase.randomPopulateActivator();
+            neurons.put(neuronBase.id, neuronBase);
+            attachRandom(neuronBase);
+        }
+    }
+    private void attachRandom(NeuronBase neuronBase){
+        if(neuronBase.id == null){
+            throw new ChaosNetException("`Neuron.id` cannot be `null`");
+        }
+        NeuronBase depNeuron = null;
+        NeuronBase mainNeuron = null;
+        switch(neuronBase._base_type()){
+            case(com.schematical.chaoscraft.Enum.INPUT):
+                depNeuron = neuronBase;
+                mainNeuron = getRandomNeuronByType(
+                        new ArrayList<String>(
+                                Arrays.asList(
+                                        com.schematical.chaoscraft.Enum.OUTPUT,
+                                        com.schematical.chaoscraft.Enum.MIDDLE
+                                )
+                        )
+                );
+                break;
+            case(com.schematical.chaoscraft.Enum.OUTPUT):
+                mainNeuron = neuronBase;
+                depNeuron = getRandomNeuronByType(
+                       com.schematical.chaoscraft.Enum.INPUT
+                );
+                break;
+            case(com.schematical.chaoscraft.Enum.MIDDLE):
+                depNeuron = neuronBase;
+                mainNeuron = getRandomNeuronByType(
+                        com.schematical.chaoscraft.Enum.OUTPUT
+                );
+                break;
+        }
+        NeuronDep neuronDep = new NeuronDep();
+        neuronDep.depNeuron = depNeuron;
+        neuronDep.depNeuronId = depNeuron.id;
+        neuronDep.weight = (float)(2 * Math.random()) - 1;
+        mainNeuron.dependencies.add(neuronDep);
+
+
+    }
+    public NeuronBase getRandomNeuronByType(String type){
+        return getRandomNeuronByType(new ArrayList<String>(Arrays.asList(type)));
+    }
+    public NeuronBase getRandomNeuronByType(ArrayList<String> types){
+        ArrayList<NeuronBase> possibleNeurons = getNeuronsByType(
+                types
+        );
+        int index = (int)Math.floor(possibleNeurons.size() * Math.random());
+        return possibleNeurons.get(index);
+    }
+    public ArrayList<NeuronBase> getNeuronsByType(String type){
+
+        return getNeuronsByType(new ArrayList<String>(Arrays.asList(type)));
+    }
+    public ArrayList<NeuronBase> getNeuronsByType(ArrayList<String> types){
+        ArrayList<NeuronBase> neuronBases = new ArrayList<>();
+        for (NeuronBase neuronBase : neurons.values()) {
+            if(types.contains(neuronBase._base_type())){
+                    neuronBases.add(neuronBase);
+            }
+        }
+        return neuronBases;
     }
 }

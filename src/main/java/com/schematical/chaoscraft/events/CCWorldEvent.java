@@ -1,5 +1,6 @@
 package com.schematical.chaoscraft.events;
 
+import com.schematical.chaoscraft.Enum;
 import com.schematical.chaoscraft.fitness.EntityFitnessRule;
 import com.schematical.chaosnet.model.ChaosNetException;
 import net.minecraft.block.Block;
@@ -30,8 +31,9 @@ public class CCWorldEvent {
         TARGET_CLOSE_PITCH,
         TARGET_SELECTED,
         IS_FACING,
+        BLOCK_PLACED_TOUCHING_WAYPOINT,
         BUILD_COMPLETE,
-        BLOCK_PLACED_TOUCHING_WAYPOINT
+        ITEM_USED
     }
     public enum Axis{
         X,
@@ -69,6 +71,28 @@ public class CCWorldEvent {
         }
         return response;
     }
+    public String toSimpleId(){
+        String response = null;
+        if(block != null){
+            if(response != null){
+                throw new ChaosNetException("Response is already propigate, this has two or more possible unique keys");
+            }
+            response = Enum.BLOCK_ID + ":" + block.getRegistryName();
+        }
+        if(item != null){
+            if(response != null){
+                throw new ChaosNetException("Response is already propigate, this has two or more possible unique keys");
+            }
+            response = Enum.ITEM_ID + ":" + item.getRegistryName();
+        }
+        if(entity != null){
+            if(response != null){
+                throw new ChaosNetException("Response is already propigate, this has two or more possible unique keys");
+            }
+            response = Enum.ENTITY_ID + ":" + entity.getType().getRegistryName();
+        }
+        return response;
+    }
 
     /**
      * Created by user1a on 1/4/19.
@@ -99,5 +123,6 @@ public class CCWorldEvent {
             }
             return worldEvent.toString() + " = " + getAdjustedScore() + "(" + score + "*" + _multiplier + ")";
         }
+
     }
 }

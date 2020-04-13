@@ -32,4 +32,6 @@ public class EntityFitnessScoreEvent {
         }
         return worldEvent.toString() + " = " + getAdjustedScore() + "(" + score + "*" + _multiplier + ")";
     }
+
+
 }

@@ -1,7 +1,7 @@
 package com.schematical.chaoscraft.ai;
 
 
-import com.schematical.chaoscraft.ai.activators.iActivator;
+import com.schematical.chaoscraft.ai.activators.*;
 import com.schematical.chaosnet.model.ChaosNetException;
 import net.minecraft.entity.LivingEntity;
 import org.json.simple.JSONArray;
@@ -57,8 +57,9 @@ public abstract class NeuronBase extends InnovationBase {
             neuronDep.parseData(neuronDepJSON);
             if(neuronDep.depNeuronId.equals(id)){
                 throw new ChaosNetException("Invalid `neuronDep` - NeuronDep on self: " + id);
+            }else {
+                this.dependencies.add(neuronDep);
             }
-            this.dependencies.add(neuronDep);
         }
 
         Object evalGroupJSON = jsonObject.get("$EVAL_GROUP");
@@ -122,7 +123,9 @@ public abstract class NeuronBase extends InnovationBase {
                 throw new ChaosNetException("Missing `neuronDep.depNeuron` : " + orgNamespace + " " + neuronDep.depNeuronId);
             }
             NeuralNet.EvalGroup targetEvalGroup = nNet.getCurrentTargetEvalGroup();
-            if(!targetEvalGroup.equals(NeuralNet.EvalGroup.DEFAULT)){
+            if(
+                NeuralNet.EvalGroup.DEFAULT.equals(neuronDep.depNeuron.getEvalGroup())
+            ){
                 neuronDep.evaluate();//Defaults need to get evaluated
             }else if(targetEvalGroup.equals(neuronDep.depNeuron.getEvalGroup())){
                 neuronDep.evaluate();//
@@ -137,6 +140,9 @@ public abstract class NeuronBase extends InnovationBase {
         return getCurrentValue();
 
     }
+
+
+
     public NeuralNet.EvalGroup getEvalGroup(){
         return evalGroup;
     }
@@ -202,4 +208,29 @@ public abstract class NeuronBase extends InnovationBase {
         return hasBeenEvaluated;
     }
 
+    public void randomPopulateActivator() {
+        if(activator != null){
+            throw new ChaosNetException("Activator already populated");
+        }
+        ArrayList<Class> activators = new ArrayList();
+        activators.add(BinaryStepActivator.class);
+        activators.add(GaussianActivator.class);
+        activators.add(ReluActivator.class);
+        activators.add(SigmoidActivator.class);
+        int index = (int)Math.floor(activators.size() * Math.random());
+        try {
+            activator = (iActivator)activators.get(index).newInstance();
+        } catch (InstantiationException e) {
+           throw new ChaosNetException(e.getMessage());
+        } catch (IllegalAccessException e) {
+            throw new ChaosNetException(e.getMessage());
+        }
+    }
+
+    public void setEvalGroup(NeuralNet.EvalGroup evalGroup) {
+        if(this.evalGroup != null){
+            throw new ChaosNetException("`evalGroup` is set and we are trying to set that. This should not happen");
+        }
+        this.evalGroup = evalGroup;
+    }
 }

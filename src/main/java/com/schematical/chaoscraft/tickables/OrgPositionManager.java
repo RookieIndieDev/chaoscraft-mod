@@ -16,7 +16,7 @@ import net.minecraft.util.math.Vec3i;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
 
-public class OrgPositionManager implements iChaosOrgTickable {
+public class OrgPositionManager extends BaseChaosEventListener {
     public Vec3i startPos;
     public Vec3i lastCheckPos;
     public Vec3d maxDist = new Vec3d(0,0,0);
@@ -26,8 +26,9 @@ public class OrgPositionManager implements iChaosOrgTickable {
     public int ticksWhileLookingAtTarget = 0;
     public boolean isLookingAtTarget = false;
     public float lookAtScore = 0;
-    @Override
-    public void Tick(BaseOrgManager orgManager) {
+
+
+    public void onTick(BaseOrgManager orgManager) {
         boolean isServer = orgManager instanceof ServerOrgManager;
         if( this.startPos == null){
             Vec3d vec3d = orgManager.getEntity().getPositionVec();
@@ -68,7 +69,7 @@ public class OrgPositionManager implements iChaosOrgTickable {
                     CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.TRAVEL_ALONG_AXIS);
                     worldEvent.amount = 1;
                     worldEvent.axis = CCWorldEvent.Axis.X;
-                    orgManager.getEntity().entityFitnessManager.test(worldEvent);
+                    ((ServerOrgManager)orgManager).test(worldEvent);
                 }
             }
             if(Math.round(Math.abs(diffVec.getY())) > this.maxDist.y){
@@ -81,7 +82,7 @@ public class OrgPositionManager implements iChaosOrgTickable {
                     CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.TRAVEL_ALONG_AXIS);
                     worldEvent.amount = 1;
                     worldEvent.axis = CCWorldEvent.Axis.Y;
-                    orgManager.getEntity().entityFitnessManager.test(worldEvent);
+                    ((ServerOrgManager)orgManager).test(worldEvent);
                 }
             }
             if(Math.round(Math.abs(diffVec.getZ())) > this.maxDist.z){
@@ -94,7 +95,7 @@ public class OrgPositionManager implements iChaosOrgTickable {
                     CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.TRAVEL_ALONG_AXIS);
                     worldEvent.amount = 1;
                     worldEvent.axis = CCWorldEvent.Axis.Z;
-                    orgManager.getEntity().entityFitnessManager.test(worldEvent);
+                    ((ServerOrgManager)orgManager).test(worldEvent);
                 }
             }
 
@@ -105,81 +106,13 @@ public class OrgPositionManager implements iChaosOrgTickable {
                 worldEvent.amount = 1;
                 worldEvent.position = this.lastCheckPos;
                 worldEvent.blockTouchedState = hasTouchedBlock ? CCWorldEvent.BlockTouchedState.HAS_TOUCHED : CCWorldEvent.BlockTouchedState.HAS_NOT_TOUCHED;
-                orgManager.getEntity().entityFitnessManager.test(worldEvent);
+                ((ServerOrgManager)orgManager).test(worldEvent);
             }
             if(!hasTouchedBlock){
                 touchedBlocks.add(this.lastCheckPos);
             }
         }
-        if(isServer ){
 
-            ArrayList<BiologyBase> targetSlots = orgManager.getNNet().getBiologyByType(TargetSlot.class);
-            for (BiologyBase biologyBase : targetSlots) {
-
-                iTargetable target = (TargetSlot)biologyBase;
-
-                Double dist = target.getDist();
-                Double pitch = target.getPitchDelta();
-                Double yaw = target.getYawDelta();
-
-
-                //TODO: Avg multiplier over
-                if (
-                    pitch != null &&
-                    yaw != null &&
-                    dist != null
-                ) {
-                    float distDelta = (float) (1 - (dist / ScanManager.range));
-                    float MIN_DELTA = 15f * distDelta;
-
-
-                    if (
-                        dist < ScanManager.range &&
-                        Math.abs(yaw) < MIN_DELTA &&
-                        Math.abs(pitch) < MIN_DELTA &&
-                        ticksWhileLookingAtTarget < 20 * 5
-                    ) {
-                        if (!isLookingAtTarget) {
-                            ticksWhileLookingAtTarget = 0;
-                            isLookingAtTarget = true;
-                            lookAtScore = 0;
-                        } else {
-                            ticksWhileLookingAtTarget += 1;
-                            float yawDelta = (float) (1 - Math.abs(yaw) / MIN_DELTA);
-                            float pitchDelta = (float) (1 - (Math.abs(pitch) / MIN_DELTA));
-                            if (distDelta < 0) {
-                                distDelta = .01f;
-                            }
-                            lookAtScore += distDelta  * pitchDelta * yawDelta;
-                        }
-                    } else {
-                        if (isLookingAtTarget) {
-
-                            if (ticksWhileLookingAtTarget > 5) {
-                                CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.IS_FACING);
-
-                                float timeMultiplier = ticksWhileLookingAtTarget / 20f; //1x for every second of connection
-                                worldEvent.extraMultiplier = timeMultiplier * (lookAtScore/ticksWhileLookingAtTarget);
-                                if (worldEvent.extraMultiplier < 0) {
-                                    throw new ChaosNetException("Negative Multiplier");
-                                }
-                                if(target.getTargetEntity() != null){
-                                    worldEvent.entity = target.getTargetEntity();
-                                }
-                                if(target.getTargetBlockPos() != null){
-                                    worldEvent.block = orgManager.getEntity().world.getBlockState(target.getTargetBlockPos()).getBlock();
-                                }
-                                orgManager.getEntity().entityFitnessManager.test(worldEvent);
-                            }
-                            isLookingAtTarget = false;
-                        }
-                    }
-                } else {
-                    isLookingAtTarget = false;
-                }
-            }
-
-        }
 
         if(
             isServer &&
@@ -187,7 +120,7 @@ public class OrgPositionManager implements iChaosOrgTickable {
             ticksSinceLastMove % (20 * 5) == 0
         ){
             CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.HAS_NOT_TRAVELED);
-            orgManager.getEntity().entityFitnessManager.test(worldEvent);
+            ((ServerOrgManager)orgManager).test(worldEvent);
         }
     }
 

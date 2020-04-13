@@ -2,6 +2,7 @@ package com.schematical.chaoscraft.ai.inputs;
 
 import com.schematical.chaoscraft.ai.InputNeuron;
 import com.schematical.chaoscraft.entities.OrgEntity;
+import com.schematical.chaoscraft.services.targetnet.ScanEntry;
 import com.schematical.chaoscraft.services.targetnet.ScanManager;
 import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
@@ -17,10 +18,8 @@ public class TargetCandidateLightInput extends InputNeuron {
     @Override
     public float evaluate(){
         ScanManager scanManager =  ((OrgEntity)this.getEntity()).getClientOrgManager().getScanManager();
-        ScanManager.ScanEntry scanEntry = scanManager.getFocusedScanEntry();
-        if(scanEntry == null){
-            return getCurrentValue();
-        }
+        ScanEntry scanEntry = scanManager.getFocusedScanEntry();
+
 
         int light = nNet.entity.world.getLight(scanEntry.getTargetBlockPos());
         setCurrentValue(((float) light)/ 15f);

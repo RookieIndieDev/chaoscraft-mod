@@ -3,15 +3,15 @@ package com.schematical.chaoscraft.client;
 import com.schematical.chaoscraft.BaseOrgManager;
 import com.schematical.chaoscraft.ChaosCraft;
 import com.schematical.chaoscraft.ai.CCObservableAttributeManager;
-import com.schematical.chaoscraft.blocks.ChaosBlocks;
 import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.CCClientOrgDebugStateChangeRequestPacket;
 import com.schematical.chaoscraft.network.packets.CCServerScoreEventPacket;
 import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaoscraft.services.targetnet.ScanManager;
+import com.schematical.chaoscraft.tickables.BaseChaosEventListener;
+import com.schematical.chaoscraft.tickables.ChaosHighScoreTracker;
 import com.schematical.chaoscraft.tickables.OrgPositionManager;
-import com.schematical.chaoscraft.tickables.TargetNNetManager;
 import com.schematical.chaosnet.model.ChaosNetException;
 import com.schematical.chaosnet.model.Organism;
 import net.minecraft.entity.player.PlayerEntity;
@@ -35,7 +35,9 @@ public class ClientOrgManager extends BaseOrgManager {
     private ScanManager scanManager;
 
     public ClientOrgManager(){
-        this.attatchTickable(new OrgPositionManager());
+
+        this.attatchEventListener(new OrgPositionManager());
+        this.attatchEventListener(new ChaosHighScoreTracker());
     }
 
     public int getExpectedLifeEndTime(){
@@ -87,7 +89,8 @@ public class ClientOrgManager extends BaseOrgManager {
         this.scanManager = new ScanManager(this);
         this.orgEntity.attachNNetRaw(organism.getNNetRaw());
         orgEntity.attachClientOrgEntity(this);
-        this.attatchTickable(new TargetNNetManager(this.scanManager));
+        //this.attatchTickable(new TargetNNetManager(this.scanManager));
+        //this.attatchTickable(new RTNeatTicker(this.orgEntity));
         spawnCount += 1;
         state = State.EntityAttached;
     }
@@ -234,8 +237,16 @@ public class ClientOrgManager extends BaseOrgManager {
     public ScanManager getScanManager() {
         return scanManager;
     }
-
-
+    public void triggerOnReport(){
+        for (BaseChaosEventListener eventListener : getEventListeners()) {
+            eventListener.onClientReport(this);
+        }
+    }
+    public void triggerOnTickEvent() {
+        for (BaseChaosEventListener eventListener : getEventListeners()) {
+            eventListener.onClientTick(this);
+        }
+    }
     public enum State{
         Uninitialized,
         OrgAttached,

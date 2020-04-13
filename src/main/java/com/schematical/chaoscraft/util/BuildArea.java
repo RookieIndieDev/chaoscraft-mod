@@ -13,7 +13,7 @@ import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
 public class BuildArea{
     public Array2DRowRealMatrix[] templates = new Array2DRowRealMatrix[4];
     public Array2DRowRealMatrix[] areaMatrices = new Array2DRowRealMatrix[4];
-    private BuildAreaMarkerTileEntity buildaAreaEntity;
+    private BuildAreaMarkerTileEntity buildAreaEntity;
     private ServerOrgManager currentServerOrgManager;
     private double score;
     private int blockPlacedCount = 0;
@@ -30,9 +30,9 @@ public class BuildArea{
         for(int k = 0; k < templates.length; k++){
             for(int i = 0; i < 12; i++) {
                 for (int j = 0; j < 12; j++) {
-                    if (buildaAreaEntity.getWorld() != null) {
+                    if (buildAreaEntity.getWorld() != null) {
                         currentBlock = pos.add(i, k, -j);
-                        block = buildaAreaEntity.getWorld().getBlockState(currentBlock).getBlock();
+                        block = buildAreaEntity.getWorld().getBlockState(currentBlock).getBlock();
                         updateMatrix(i, j, block.toString(), k);
                     }
                 }
@@ -41,7 +41,7 @@ public class BuildArea{
     }
 
     public void assignBuildAreaTileEntity(BuildAreaMarkerTileEntity tileEntity){
-        this.buildaAreaEntity = tileEntity;
+        this.buildAreaEntity = tileEntity;
     }
 
     public void assignCurrentOrgManager(ServerOrgManager orgManager){
@@ -51,8 +51,8 @@ public class BuildArea{
     public ServerOrgManager getCurrentServerOrgManager(){
         return this.currentServerOrgManager;
     }
-    public BuildAreaMarkerTileEntity getBuildaAreaEntity(){
-        return this.buildaAreaEntity;
+    public BuildAreaMarkerTileEntity getBuildAreaEntity(){
+        return this.buildAreaEntity;
     }
 
     public void createMatrices(){

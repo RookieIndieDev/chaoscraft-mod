@@ -42,10 +42,10 @@ public class SpawnBlockPosProvider implements iServerSpawnProvider {
         }
         int i = (int)Math.floor(Math.random() * spawnBlocks.size());
         SpawnBlockTileEntity spawnBlockTileEntity = (SpawnBlockTileEntity)ChaosCraft.getServer().server.getWorld(DimensionType.OVERWORLD).getTileEntity(spawnBlocks.get(i));
-        double closestBuildAreaDist = ChaosCraft.buildAreas.get(0).getBuildaAreaEntity().getDistanceSq(spawnBlockTileEntity.getPos().getX(), spawnBlockTileEntity.getPos().getY(), spawnBlockTileEntity.getPos().getZ());
+        double closestBuildAreaDist = ChaosCraft.buildAreas.get(0).getBuildAreaEntity().getDistanceSq(spawnBlockTileEntity.getPos().getX(), spawnBlockTileEntity.getPos().getY(), spawnBlockTileEntity.getPos().getZ());
         BuildArea closestBuildArea = ChaosCraft.buildAreas.get(0);
         for(BuildArea buildArea : ChaosCraft.buildAreas){
-            double dist = buildArea.getBuildaAreaEntity().getDistanceSq(spawnBlockTileEntity.getPos().getX(), spawnBlockTileEntity.getPos().getY(), spawnBlockTileEntity.getPos().getZ());
+            double dist = buildArea.getBuildAreaEntity().getDistanceSq(spawnBlockTileEntity.getPos().getX(), spawnBlockTileEntity.getPos().getY(), spawnBlockTileEntity.getPos().getZ());
             if(dist < closestBuildAreaDist) {
                 closestBuildAreaDist = dist;
                 closestBuildArea = buildArea;

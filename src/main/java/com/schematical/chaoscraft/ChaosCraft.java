@@ -3,18 +3,10 @@ package com.schematical.chaoscraft;
 import com.amazonaws.opensdk.config.ConnectionConfiguration;
 import com.amazonaws.opensdk.config.TimeoutConfiguration;
 import com.schematical.chaoscraft.blocks.ChaosBlocks;
-import com.schematical.chaoscraft.blocks.ChaosEggBlock;
-import com.schematical.chaoscraft.blocks.SpawnBlock;
-import com.schematical.chaoscraft.blocks.WaypointBlock;
 import com.schematical.chaoscraft.client.*;
-import com.schematical.chaoscraft.commands.CCAuthCommand;
-import com.schematical.chaoscraft.commands.CCHardResetCommand;
-import com.schematical.chaoscraft.commands.CCSummonCommand;
-import com.schematical.chaoscraft.commands.CCTestCommand;
+import com.schematical.chaoscraft.commands.*;
 import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.entities.OrgEntityRenderer;
-import com.schematical.chaoscraft.fitness.ChaosCraftFitnessManager;
-import com.schematical.chaoscraft.fitness.EntityFitnessManager;
 import com.schematical.chaoscraft.items.ChaosItems;
 import com.schematical.chaoscraft.network.ChaosNetworkManager;
 
@@ -22,44 +14,26 @@ import com.schematical.chaoscraft.server.ChaosCraftServer;
 
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import com.schematical.chaoscraft.tileentity.ChaosTileEntity;
-import com.schematical.chaoscraft.tileentity.SpawnBlockTileEntity;
-import com.schematical.chaoscraft.tileentity.WaypointBlockTileEntity;
 import com.schematical.chaoscraft.util.BuildArea;
 import com.schematical.chaosnet.ChaosNetClientBuilder;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.TurtleEggBlock;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialColor;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.goal.NearestAttackableTargetGoal;
 import net.minecraft.entity.monster.MonsterEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.FMLWorldPersistenceHook;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.Mod;
@@ -73,14 +47,11 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
+
+import java.util.ArrayList;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("chaoscraft")
@@ -109,7 +80,6 @@ public class ChaosCraft
         LOGGER.info("Config Loaded - Env: " + config.env);
         LOGGER.info("Config Username: " + config.username);
 
-
         setupSDK(config.env);
         auth();
         // Register the setup method for modloading
@@ -130,7 +100,10 @@ public class ChaosCraft
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onClientStarting);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onKeyInputEvent);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onEntitySpawn);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::chunkEnterEvent);
+
         if(FMLEnvironment.dist.equals(Dist.CLIENT)) {
+            FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRenderWorldLastEvent);
             FMLJavaModLoadingContext.get().getModEventBus().addListener(this::renderOverlayEvent);
         }
         FMLJavaModLoadingContext.get().getModEventBus().addGenericListener(EntityType.class, this::onEntityRegistry);
@@ -182,8 +155,9 @@ public class ChaosCraft
         sdk =  builder.build();
     }
     public static void auth(){
-        LOGGER.info("REFRESH TOKEN:" + config.refreshToken.substring(0, 10) );
+
         if(config.refreshToken != null){
+            LOGGER.info("REFRESH TOKEN:" + config.refreshToken.substring(0, 10) );
             AuthTokenRequest authTokenRequest = new AuthTokenRequest();
             authTokenRequest.setUsername(config.username);
             authTokenRequest.setRefreshToken(config.refreshToken);
@@ -248,7 +222,7 @@ public class ChaosCraft
         CCAuthCommand.register(event.getCommandDispatcher());
         CCTestCommand.register(event.getCommandDispatcher());
         CCHardResetCommand.register(event.getCommandDispatcher());
-
+        CCBlockResetCommand.register(event.getCommandDispatcher());
         server.loadFitnessFunctions();
     }
 
@@ -372,5 +346,20 @@ public class ChaosCraft
             MonsterEntity monsterEntity = (MonsterEntity) entity;
             monsterEntity.targetSelector.addGoal(2, new NearestAttackableTargetGoal(monsterEntity, OrgEntity.class, true));
         }
+
     }
+    @SubscribeEvent
+    public void chunkEnterEvent(EntityEvent.EnteringChunk event) {
+        if(server != null){
+            server.chunkEnterEvent(event);
+        }
+    }
+    @SubscribeEvent
+    @OnlyIn(Dist.CLIENT)
+    public void onRenderWorldLastEvent(RenderWorldLastEvent event) {
+        if(client != null){
+            client.onRenderWorldLastEvent(event);
+        }
+    }
+
 }

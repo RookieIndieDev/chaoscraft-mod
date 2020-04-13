@@ -7,6 +7,7 @@ import com.schematical.chaoscraft.ai.biology.TargetSlot;
 import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.events.CCWorldEvent;
 import com.schematical.chaoscraft.server.ServerOrgManager;
+import com.schematical.chaoscraft.util.ChaosTarget;
 import com.schematical.chaosnet.model.ChaosNetException;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
@@ -33,6 +34,7 @@ public class CCClientActionPacket {
     private Entity entity;
     private BiologyBase biologyBase;
     public String payload;
+    private Class actionBase;
 
     public CCClientActionPacket(String orgNamespace, Action action)
     {
@@ -66,6 +68,9 @@ public class CCClientActionPacket {
         }
         if(pkt.blockPos != null){
             obj.put("blockPos", pkt.blockPos.getX() + "," + pkt.blockPos.getY() + "," + pkt.blockPos.getZ());
+        }
+        if(pkt.actionBase != null){
+            obj.put("actionBase", pkt.actionBase.getCanonicalName());
         }
         if(pkt.biologyBase != null){
             obj.put("biology", pkt.biologyBase.id);
@@ -109,6 +114,9 @@ public class CCClientActionPacket {
 
                 throw new ChaosNetException("No valid target in message");
             }
+            if(obj.get("actionBase") != null){
+                pkt.actionBase = Class.forName(obj.get("actionBase").toString());
+            }
             if(obj.get("biology") != null){
                 ServerOrgManager serverOrgManager = ChaosCraft.getServer().getOrgByNamespace(pkt.orgNamespace);
                 if(serverOrgManager == null){
@@ -147,6 +155,10 @@ public class CCClientActionPacket {
         return biologyBase;
     }
 
+    public void setActionBase(Class actionBase) {
+        this.actionBase = actionBase;
+    }
+
 
     public static class Handler
     {
@@ -161,10 +173,10 @@ public class CCClientActionPacket {
                         throw new ChaosNetException("No `TargetSlot` found.");
                     }
                     if(message.entity != null) {
-                        targetSlot.setTarget(message.entity);
+                        targetSlot.setTarget(new ChaosTarget(message.entity));
                         worldEvent.entity = message.entity;
                     }else if (message.blockPos != null){
-                        targetSlot.setTarget(message.blockPos);
+                        targetSlot.setTarget(new ChaosTarget(message.blockPos));
                         BlockState blockState =ChaosCraft.getServer().server.getWorld(DimensionType.OVERWORLD).getBlockState(message.blockPos);
                         worldEvent.block = blockState.getBlock();
 
@@ -172,7 +184,7 @@ public class CCClientActionPacket {
                         throw new ChaosNetException("No valid target in message");
                     }
                     ServerOrgManager serverOrgManager = ChaosCraft.getServer().getOrgByNamespace(message.orgNamespace);
-                    serverOrgManager.getEntity().entityFitnessManager.test(worldEvent);
+                    serverOrgManager.test(worldEvent);
                 }
 
             });

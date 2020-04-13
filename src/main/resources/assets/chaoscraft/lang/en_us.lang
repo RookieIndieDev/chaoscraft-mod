@@ -21,6 +21,9 @@ chaoscraft.gui.orgdetail.debug-on="Debug On",
 chaoscraft.gui.orgdetail.debug-off="Debug Off"
 chaoscraft.gui.orgneurondetail.overridevalue="Override Value"
 chaoscraft.gui.orgdetail.scoreevents="Score Events"
+chaoscraft.gui.orgdetail.actionbuffer="Action Buffer"
+
+
 chaoscraft.gui.mainmenu.species="Species"
 chaoscraft.gui.mainmenu.trainingroom="Training Room"
 chaoscraft.gui.mainmenu.observer-mode-start="Start Observing"
@@ -33,3 +36,8 @@ chaoscraft.gui.trainingroomselectionoverlay.training-room-username="Training Roo
 chaoscraft.gui.trainingroomselectionoverlay.training-room-namespace="Training Room Namespace"
 chaoscraft.gui.trainingroomselectionoverlay.env="Environment"
 chaoscraft.gui.debugmenu.stir="Stir"
+chaoscraft.gui.mainmenu.observation-options="Observation Options"
+chaoscraft.gui.observer-menu.display-scores="Display Scores"
+chaoscraft.gui.observer-menu.draw-target-lines="Draw Target Lines"
+chaoscraft.gui.observer-menu.display-inventory="Display Inventory"
+chaoscraft.gui.mainmenu.org-details="Org Details"

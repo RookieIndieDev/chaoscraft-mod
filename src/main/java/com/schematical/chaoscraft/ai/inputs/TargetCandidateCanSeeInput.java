@@ -2,6 +2,7 @@ package com.schematical.chaoscraft.ai.inputs;
 
 import com.schematical.chaoscraft.ai.InputNeuron;
 import com.schematical.chaoscraft.entities.OrgEntity;
+import com.schematical.chaoscraft.services.targetnet.ScanEntry;
 import com.schematical.chaoscraft.services.targetnet.ScanManager;
 import com.schematical.chaoscraft.util.TargetHelper;
 import net.minecraft.entity.Entity;
@@ -19,10 +20,8 @@ public class TargetCandidateCanSeeInput extends InputNeuron {
     @Override
     public float evaluate(){
         ScanManager scanManager =  ((OrgEntity)this.getEntity()).getClientOrgManager().getScanManager();
-        ScanManager.ScanEntry scanEntry = scanManager.getFocusedScanEntry();
-        if(scanEntry == null){
-            return getCurrentValue();
-        }
+        ScanEntry scanEntry = scanManager.getFocusedScanEntry();
+
 
         Vec3d vec3d = this.getEntity().getPositionVec();
         Vec3d vec3d1 = scanEntry.getPosition();

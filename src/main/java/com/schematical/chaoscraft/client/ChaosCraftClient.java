@@ -6,6 +6,8 @@ import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.*;
 import com.schematical.chaoscraft.server.ChaosCraftServerPlayerInfo;
+import com.schematical.chaoscraft.services.targetnet.ScanManager;
+import com.schematical.chaoscraft.services.targetnet.ScanState;
 import com.schematical.chaoscraft.tileentity.FactoryTileEntity;
 import com.schematical.chaoscraft.tileentity.SpawnBlockTileEntity;
 import com.schematical.chaosnet.model.*;
@@ -14,11 +16,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.Items;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.GameType;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 
@@ -54,6 +54,9 @@ public class ChaosCraftClient {
     private ChaosObserveOverlayScreen chaosObserveOverlayScreen;
     private DistNormTracker distNormTracker;
 
+
+
+
     public ChaosCraftClient(Minecraft minecraft) {
         this.minecraft = minecraft;
         chaosObserveOverlayScreen = new ChaosObserveOverlayScreen(this.minecraft);
@@ -82,15 +85,15 @@ public class ChaosCraftClient {
     }
     public void render() {
 
-        if(chaosPlayerNeuronTestScreen != null){
+        /*if(chaosPlayerNeuronTestScreen != null){
             chaosPlayerNeuronTestScreen.render();
-        }
+        }*/
         if(!observationState.equals(ChaosCraftServerPlayerInfo.State.None)){
             chaosObserveOverlayScreen.render();
         }
 
         if(distNormTracker != null){
-           distNormTracker.render();
+            distNormTracker.render();
         }
     }
     public void setTrainingRoomInfo(ServerIntroInfoPacket serverInfo) {
@@ -109,6 +112,20 @@ public class ChaosCraftClient {
             Minecraft.getInstance().displayGuiScreen((Screen)null);
         }
         startTrainingSession();
+    }
+    public HashMap<ScanState, Integer> getScanStateCounts(){
+        HashMap<ScanState, Integer> states = new HashMap<>();
+        for (ClientOrgManager clientOrgManager : myOrganisms.values()) {
+            ScanManager scanManager = clientOrgManager.getScanManager();
+            if(scanManager != null) {
+                ScanState scanState = scanManager.getState();
+                if (!states.containsKey(scanState)) {
+                    states.put(scanState, 0);
+                }
+                states.put(scanState, states.get(scanState) + 1);
+            }
+        }
+        return states;
     }
     public void startTrainingSession(){
 
@@ -283,10 +300,11 @@ public class ChaosCraftClient {
         ) {
 
             if(thread == null) {
+                triggerOnReport(orgsReadyToReport);
                 if(newOrganisms.size() > 0){
                     cleanUp();
                     Iterator<String> iterator = newOrganisms.keySet().iterator();
-                   while(iterator.hasNext()){
+                    while(iterator.hasNext()){
                         String namespace = iterator.next();
                         myOrganisms.put(namespace, newOrganisms.get(namespace));
                         iterator.remove();
@@ -305,6 +323,15 @@ public class ChaosCraftClient {
 
 
 
+    }
+
+    private void triggerOnReport(List<ClientOrgManager> orgsReadyToReport) {
+        for (ClientOrgManager orgManager : orgsReadyToReport) {
+            if(!orgManager.getState().equals(ClientOrgManager.State.ReadyToReport)){
+                throw new ChaosNetException("Invalid state: " + orgManager.getState());
+            }
+            orgManager.triggerOnReport();
+        }
     }
 
 
@@ -499,6 +526,7 @@ public class ChaosCraftClient {
         if(chaosPlayerNeuronTestScreen != null){
             chaosPlayerNeuronTestScreen.setObservedEntity(message, clientOrgManager);
         }
+
     }
 
     public void stir() {
@@ -506,6 +534,32 @@ public class ChaosCraftClient {
 
         //Send message to server
 
+    }
+
+    public void attachActionStateChange(CCActionStateChangeEventPacket message) {
+        if(!myOrganisms.containsKey(message.orgNamespace)){
+            ChaosCraft.LOGGER.error("attatchScoreEventToEntity - Cannot find orgNamespace: " + message.orgNamespace);
+            return;
+        }
+        myOrganisms.get(message.orgNamespace).getActionBuffer().applyStateChange(message);
+    }
+
+    public void onRenderWorldLastEvent(RenderWorldLastEvent event) {
+        if(chaosObserveOverlayScreen == null){
+            return;
+        }
+        chaosObserveOverlayScreen.onRenderWorldLastEvent(event);
+    }
+
+    public ChaosObserveOverlayScreen getObserveOverlayScreen() {
+        return chaosObserveOverlayScreen;
+    }
+
+    public ClientOrgManager getObservedOrganism() {
+        if(chaosObserveOverlayScreen == null){
+            return null;
+        }
+        return chaosObserveOverlayScreen.getObservedEntity();
     }
 
     public enum State{

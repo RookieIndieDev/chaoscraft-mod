@@ -1,24 +1,17 @@
 package com.schematical.chaoscraft.services.targetnet;
 
 import com.schematical.chaoscraft.ChaosCraft;
-import com.schematical.chaoscraft.ai.CCObserviableAttributeCollection;
 import com.schematical.chaoscraft.ai.NeuralNet;
 import com.schematical.chaoscraft.ai.OutputNeuron;
+import com.schematical.chaoscraft.ai.action.ActionBase;
+import com.schematical.chaoscraft.ai.action.CraftAction;
+import com.schematical.chaoscraft.ai.biology.ActionTargetSlot;
+import com.schematical.chaoscraft.ai.biology.BiologyBase;
 import com.schematical.chaoscraft.ai.biology.TargetSlot;
 import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.entities.OrgEntity;
-import com.schematical.chaoscraft.events.CCWorldEvent;
-import com.schematical.chaoscraft.network.ChaosNetworkManager;
-import com.schematical.chaoscraft.network.packets.CCClientActionPacket;
-import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
+import com.schematical.chaoscraft.util.ChaosTarget;
 import com.schematical.chaosnet.model.ChaosNetException;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,144 +19,180 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ScanManager {
-    private ScanState scanState = ScanState.Finished;
-    private ScanEntry focusedScanEntry;
-    private ClientOrgManager clientOrgManager;
-    private ArrayList<ScanEntry> entries = new ArrayList<ScanEntry>();
-    public static final int range = 10;
-    private int index = 0;
-    private int BATCH_SIZE = 500;
-    private int MAX_RANGE_INDEX;
 
-    private HashMap<String, Integer> counts = new HashMap<>();
-    private NeuralNet getNNet(){
-        return clientOrgManager.getEntity().getNNet();//TODO: Maybe get this from some type of NNet Collection
+    private ScanEntry focusedScanEntry;
+    private ActionTargetSlot focusedActionTargetSlot;
+    private float focusedActionScore = -9999;
+    private ClientOrgManager clientOrgManager;
+    private HashMap<String, ScanResult> highestResults = new HashMap<>();
+    private ScanInstance scanInstance = null;
+
+    private ScanItemInstance scanItemInstance;
+    private ScanState scanState = ScanState.Pending;
+
+    public void setFocusedActionScore(float score){
+        focusedActionScore = score;
     }
+
     public ScanManager(ClientOrgManager clientOrgManager){
         this.clientOrgManager = clientOrgManager;
         //TODO: get range from biology
-        MAX_RANGE_INDEX = (int)Math.pow(range * 2, 3);
+
     }
     public void resetScan() {
-        if(!scanState.equals(ScanState.Finished)){
-            throw new ChaosNetException("Invalid `scanState`: " + scanState.toString());
-        }
-        entries.clear();
-        index = 0;
-        scanState = ScanState.Ticking;
+        scanItemInstance = new ScanItemInstance(clientOrgManager);
 
+        scanInstance = new ScanInstance(clientOrgManager, clientOrgManager.getEntity().getPosition());
+        highestResults.clear();
     }
-    public ScanState tickScan(){
-        if(!scanState.equals(ScanState.Ticking)){
-            throw new ChaosNetException("Invalid `scanState`: " + scanState.toString());
+
+    public ScanInstance.ScanState tickScan(){
+
+        if(!scanInstance.getScanState().equals(ScanInstance.ScanState.Ticking)){
+            throw new ChaosNetException("Invalid `scanState`: " + scanInstance.getScanState().toString());
         }
+
+        if(scanItemInstance.getState().equals(ScanItemInstance.State.Pending)){
+            scanItemInstance.scan();
+            scanState = ScanState.ScanningItem;
+            return scanInstance.getScanState();
+        }
+        ArrayList<ScanEntry> newEntries = scanInstance.tick();
         OrgEntity orgEntity = this.clientOrgManager.getEntity();
-        BlockPos entityPosition = orgEntity.getPosition();
-        //Iterate through all blocks in bounds
-        int dividend = range * 2;
-        int batchCount = 0;
-        while(
-            index < MAX_RANGE_INDEX  &&
-            batchCount < BATCH_SIZE
-        ) {
-
-            int x = entityPosition.getX() - range + index % dividend;
-            int z = entityPosition.getZ() - range + (int) Math.floor(index / dividend) % dividend;
-            int y = entityPosition.getY() - range + (int) Math.floor(index / Math.pow(dividend, 2)) % dividend;
-
-            BlockPos blockPos = new BlockPos(x, y, z);
-            ScanEntry scanEntry = new ScanEntry();
-            //BlockState blockState = orgEntity.getBlockState();
-            //int light = orgEntity.world.getNeighborAwareLightSubtracted(blockPos, 0);
-            //if(light > 0) {
-                scanEntry.blockPos = blockPos;
-                scanEntry.atts = orgEntity.observableAttributeManager.Observe(blockPos, orgEntity.world);
-                if (!counts.containsKey(scanEntry.atts.resourceId)) {
-                    counts.put(scanEntry.atts.resourceId, 0);
-                }
-                counts.put(scanEntry.atts.resourceId, counts.get(scanEntry.atts.resourceId) + 1);
-                entries.add(scanEntry);
-
-            //}
-            batchCount += 1;
-            index += 1;
-
-        }
-        if(index < MAX_RANGE_INDEX){
-            return scanState;
-        }
-        //iterate through all entities in those bounds
-        AxisAlignedBB grownBox = orgEntity.getBoundingBox().grow(range, range, range);
-        List<Entity> entities =  orgEntity.world.getEntitiesWithinAABB(LivingEntity.class,  grownBox);
-        entities.addAll(orgEntity.world.getEntitiesWithinAABB(ItemEntity.class,  grownBox));
-
-        for (Entity entity : entities) {
-
-            ScanEntry scanEntry = new ScanEntry();
-            scanEntry.entity = entity;
-            scanEntry.atts = orgEntity.observableAttributeManager.Observe(entity);
-            if(!counts.containsKey(scanEntry.atts.resourceId)){
-                counts.put(scanEntry.atts.resourceId, 0);
-            }
-            counts.put(scanEntry.atts.resourceId, counts.get(scanEntry.atts.resourceId) + 1);
-            entries.add(scanEntry);
-
-        }
-        HashMap<String, ScanEntry> highestResults = new HashMap<String, ScanEntry>();
-        for (ScanEntry entry : entries) {
-            focusedScanEntry = entry;
 
 
-            List<OutputNeuron> outputs = getNNet().evaluate(NeuralNet.EvalGroup.TARGET);//Ideally the output neurons will set the score
+
+        for (ScanEntry scanEntry : newEntries) {
+            focusedScanEntry = scanEntry;
+
+            List<OutputNeuron> outputs = orgEntity.getNNet().evaluate(NeuralNet.EvalGroup.TARGET);//Ideally the output neurons will set the score
 
             Iterator<OutputNeuron> iterator = outputs.iterator();
+
 
             while (iterator.hasNext()) {
                 OutputNeuron outputNeuron = iterator.next();
                 outputNeuron.execute();
             }
+            focusedScanEntry = null;
             //Sort them each by the score of their output neurons
-            HashMap<String, Float> scores = focusedScanEntry.getScores();
+            HashMap<String, Float> scores = scanEntry.getScores();
             for (String targetSlotId : scores.keySet()) {
+                BiologyBase biologyBase = orgEntity.getNNet().biology.get(targetSlotId);
                 if(!highestResults.containsKey(targetSlotId)){
-                    highestResults.put(targetSlotId, focusedScanEntry);
-                }else{
-                    ScanEntry highScoreScanEntry = highestResults.get(targetSlotId);
-                    if(highScoreScanEntry.getScore(targetSlotId) < scores.get(targetSlotId)){
-                        highestResults.put(targetSlotId, focusedScanEntry);
+
+
+                    highestResults.put(targetSlotId, new ScanResult(targetSlotId, !(biologyBase instanceof  ActionTargetSlot)));
+                }
+                if(biologyBase instanceof ActionTargetSlot){
+                    ActionTargetSlot actionTargetSlot = (ActionTargetSlot) biologyBase;
+                    float currScore = scanEntry.getScore(actionTargetSlot.id);
+                    if(
+                        currScore != -1f &&
+                        !actionTargetSlot.validateTarget(orgEntity, scanEntry.getChaosTarget())
+                    ) {
+                        throw new ChaosNetException("Invalid `scanEntry` made it to the top with score of: " + currScore + " - ActionTargetSlot: " + actionTargetSlot.id);
                     }
                 }
+                ScanResult scanResult = highestResults.get(targetSlotId);
+                scanResult.test(scanEntry);
+
             }
         }
+        if(scanInstance.getScanState().equals(ScanInstance.ScanState.Ticking)){
+            scanState = ScanState.ScanningTarget;
+            return scanInstance.getScanState();
+        }
+        scanState = ScanState.ScanningAction;
 
         //TODO: Iterate through the biology of the main NNet and set the targets
+        float highestATSScore = -1000;
+        ActionTargetSlot highestActionTargetSlot = null;
+        ScanEntry highestActionScanEntry = null;
+        ScanEntry highestItemScanEntry = null;
+
 
         for (String targetSlotId : highestResults.keySet()) {
-            TargetSlot targetSlot = (TargetSlot )orgEntity.getNNet().getBiology(targetSlotId);
-            ScanEntry scanEntry = highestResults.get(targetSlotId);
-            CCClientActionPacket clientActionPacket = new CCClientActionPacket(orgEntity.getCCNamespace(), CCClientActionPacket.Action.SET_TARGET);
-            clientActionPacket.setBiology(targetSlot);
-            if(scanEntry.entity != null) {
 
-                targetSlot.setTarget(scanEntry.entity);
-                clientActionPacket.setEntity(scanEntry.entity);
-                ChaosNetworkManager.sendToServer(clientActionPacket);
+            TargetSlot targetSlot = (TargetSlot)orgEntity.getNNet().getBiology(targetSlotId);
+            ScanResult scanResult = highestResults.get(targetSlotId);
 
-            }else  if(scanEntry.blockPos != null){
+            if(targetSlot instanceof  ActionTargetSlot){
+                ActionTargetSlot actionTargetSlot = (ActionTargetSlot) targetSlot;
+                ChaosTarget originalTarget = actionTargetSlot.getTarget();
+                for (ScanEntry topScanEntry : scanResult.getTopEntries()) {
+                    ScanResult itemScanResult = scanItemInstance.getScanResults().get(targetSlotId);
+                    if(itemScanResult == null) {
+                        throw new ChaosNetException("Missing `itemScanResult` for " + targetSlotId);
+                    }
+                    for (ScanEntry topItemScanEntry : itemScanResult.getTopEntries()) {
 
-                clientActionPacket.setBlockPos(scanEntry.blockPos);
-                targetSlot.setTarget(scanEntry.blockPos);
-                ChaosNetworkManager.sendToServer(clientActionPacket);
+                        if (actionTargetSlot.validateTargetAndItem(orgEntity, topScanEntry.getChaosTarget(), topItemScanEntry.getChaosTargetItem())) {
+
+                            focusedActionScore = -9999;
+                            this.focusedActionTargetSlot = actionTargetSlot;
+                            this.focusedActionTargetSlot.setTarget(topScanEntry.getChaosTarget());
+                            this.focusedActionTargetSlot.setTargetItem(topItemScanEntry.getChaosTargetItem());
+                            if (!clientOrgManager.getActionBuffer().hasExecutedRecently(this.focusedActionTargetSlot.createAction(), 10)) {
+
+                                List<OutputNeuron> outputs = orgEntity.getNNet().evaluate(NeuralNet.EvalGroup.ACTION);//Ideally the output neurons will set the score
+
+                                Iterator<OutputNeuron> iterator = outputs.iterator();
+
+                                while (iterator.hasNext()) {
+                                    OutputNeuron outputNeuron = iterator.next();
+                                    outputNeuron.execute();
+                                }
+
+                                if (focusedActionScore > highestATSScore) {
+                                    highestATSScore = focusedActionScore;
+                                    highestActionTargetSlot = actionTargetSlot;
+                                    highestActionScanEntry = topScanEntry;
+                                    highestItemScanEntry = topItemScanEntry;
+                                }
+                            }
+                        }
+
+                    }
+                }
+                actionTargetSlot.setTarget(originalTarget);
 
             }else{
-                throw new ChaosNetException("Invalid ScanEntry: No blockPos nor Entity");
+                if(scanResult.getTopEntries().size() > 1){
+                    throw new ChaosNetException("`scanResult.getTopEntities().size()` should be zero in this scenario: " + scanResult.getTopEntries().size());
+                } else if (scanResult.getTopEntries().size() == 1) {
+
+                    ScanEntry scanEntry = scanResult.getTopEntries().get(0);
+                    float currScore = scanEntry.getScore(targetSlotId);
+                    targetSlot.setTargetScore(currScore);
+                    targetSlot.setTarget(scanEntry.getChaosTarget());
+                }else{
+                    //No valid targets were found
+                }
+
             }
 
+        }
+        //Add an action locally
 
 
+
+
+        if(highestActionTargetSlot != null) {
+            highestActionTargetSlot.setTarget(highestActionScanEntry.getChaosTarget());
+            highestActionTargetSlot.setTargetItem(highestItemScanEntry.getChaosTargetItem());
+            if(!highestActionTargetSlot.isValid()){
+                throw new ChaosNetException("Something went really really wrong. Is `highestActionScanEntry` being modified in the wrong spot");
+            }
+            ActionBase actionBase = highestActionTargetSlot.createAction();
+
+            this.clientOrgManager.getActionBuffer().addAction(
+                    actionBase
+            ).sync();
         }
         scanState = ScanState.Finished;
-        return scanState;
+
+        return scanInstance.getScanState();
 
     }
     public ScanEntry getFocusedScanEntry(){
@@ -173,64 +202,33 @@ public class ScanManager {
         if(focusedScanEntry == null){
             return -1;
         }
-        return counts.get(focusedScanEntry.atts.resourceId);
+        return scanInstance.getCount(focusedScanEntry.atts.resourceId);
     }
     public int getCountOfScanEntry(String resourceId){
-        return counts.get(resourceId);
+        return scanInstance.getCount(resourceId);
     }
-    public float getRange() {
-        return range;
+
+
+    public void forceEndScan() {
+        scanInstance.forceScanInterrupt();
     }
-    public ScanState getState(){
+
+    public ActionTargetSlot getFocusedActionTargetSlot() {
+        return focusedActionTargetSlot;
+    }
+
+    public ScanInstance getScanInstance() {
+        return scanInstance;
+    }
+
+
+
+    public ScanItemInstance getScanItemInstance() {
+        return scanItemInstance;
+    }
+
+
+    public ScanState getState() {
         return scanState;
     }
-    public enum ScanState{
-        //Reset,
-        Ticking,
-        Finished
-    }
-
-    public class ScanEntry {
-        public Entity entity;
-        public BlockPos blockPos;
-        public CCObserviableAttributeCollection atts;
-        private HashMap<String, Float> scores = new HashMap<String, Float>();
-        public void setScore(String targetSlotId, float score){
-            this.scores.put(targetSlotId, score);
-        }
-        public float getScore(String targetSlotId){
-            return this.scores.get(targetSlotId);
-        }
-        public HashMap<String, Float> getScores(){
-            return this.scores;
-        }
-
-        public Vec3d getPosition() {
-            if(entity != null){
-                return entity.getPositionVec();
-            }
-            if(blockPos != null) {
-                return new Vec3d(
-                    blockPos.getX(),
-                    blockPos.getY(),
-                    blockPos.getZ()
-                );
-            }
-            return null;
-        }
-        public BlockPos getTargetBlockPos() {
-            if(entity != null){
-                return new BlockPos(
-                    Math.round(entity.getEyePosition(1).getX()),
-                    Math.round(entity.getEyePosition(1).getY()),
-                    Math.round(entity.getEyePosition(1).getZ())
-                );
-            }
-            if(blockPos != null) {
-                return blockPos;
-            }
-            return null;
-        }
-    }
-
 }

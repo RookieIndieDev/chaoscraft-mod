@@ -5,12 +5,18 @@ import com.schematical.chaoscraft.ChaosCraft;
 import com.schematical.chaoscraft.ai.CCObservableAttributeManager;
 import com.schematical.chaoscraft.ai.OutputNeuron;
 import com.schematical.chaoscraft.entities.OrgEntity;
-import com.schematical.chaoscraft.fitness.EntityFitnessManager;
+import com.schematical.chaoscraft.events.CCWorldEvent;
+import com.schematical.chaoscraft.fitness.managers.EntityDiscoveryFitnessManager;
+import com.schematical.chaoscraft.fitness.managers.FitnessManagerBase;
 import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
+import com.schematical.chaoscraft.tickables.BaseChaosEventListener;
+import com.schematical.chaoscraft.tickables.OrgDeathListener;
 import com.schematical.chaoscraft.tickables.OrgPositionManager;
 import com.schematical.chaosnet.model.ChaosNetException;
 import com.schematical.chaosnet.model.Organism;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TranslationTextComponent;
 
 import java.util.ArrayList;
@@ -27,10 +33,12 @@ public class ServerOrgManager extends BaseOrgManager {
     private float maxLifeSeconds = 60;
     private int respawnCount = 0;
     private int longTicksSinceStateChange = 0;
-
+    private FitnessManagerBase entityFitnessManager;
+    public ChunkPos currChunkPos;
     public ServerOrgManager(){
 
-        this.attatchTickable(new OrgPositionManager());
+        this.attatchEventListener(new OrgPositionManager());
+        //this.attatchEventListener(new OrgDeathListener());
     }
     public void setTmpNamespace(String _tmpNamespace){
         tmpNamespace = _tmpNamespace;
@@ -56,15 +64,16 @@ public class ServerOrgManager extends BaseOrgManager {
         super.attachOrgEntity(orgEntity);
         this.orgEntity.attachSeverOrgManager(this);
         this.orgEntity.attachNNetRaw(this.organism.getNNetRaw());
-        //this.orgEntity.setHeldItem(Hand.MAIN_HAND, new ItemStack(Items.LADDER));
-        orgEntity.entityFitnessManager = new EntityFitnessManager(orgEntity);
-        orgEntity.entityFitnessManager.addNewRun();
+
+        entityFitnessManager = new EntityDiscoveryFitnessManager(this);
+
         orgEntity.observableAttributeManager = new CCObservableAttributeManager(organism);
         orgEntity.setCustomName(new TranslationTextComponent(getCCNamespace()));
         orgEntity.setSpawnHash(ChaosCraft.getServer().spawnHash);
         spawnTime = orgEntity.world.getGameTime();
 
         setState(State.Spawned);
+        triggerOnSpawned();
     }
     public void setPlayerEntity(ServerPlayerEntity serverPlayerEntity){
         if(!state.equals(State.Uninitialized)){
@@ -75,6 +84,13 @@ public class ServerOrgManager extends BaseOrgManager {
 
         setState(State.PlayerAttached);
     }
+    public void triggerOnSpawned(){
+        for (BaseChaosEventListener eventListener : getEventListeners()) {
+            eventListener.onServerSpawn(this);
+        }
+    }
+
+
 
     public ServerPlayerEntity getServerPlayerEntity(){
         return this.serverPlayerEntity;
@@ -102,8 +118,25 @@ public class ServerOrgManager extends BaseOrgManager {
         if(longTicksSinceStateChange > 2){
 
         }
+        //checkChunk();
     }
+    public void checkChunk(){
+        if(orgEntity == null){
+            return;
+        }
+        BlockPos orgPos = orgEntity.getPosition();
 
+
+        ChunkPos newChunkPos = new ChunkPos(orgPos);
+        if(
+            currChunkPos == null ||
+            currChunkPos.equals(newChunkPos)
+        ){
+            ChaosCraft.getServer().forceLoadChunk(currChunkPos, newChunkPos);
+            currChunkPos = newChunkPos;
+
+        }
+    }
     public void tickOrg(){
         if( this.orgEntity.getBoundingBox() == null){
             return;
@@ -117,7 +150,7 @@ public class ServerOrgManager extends BaseOrgManager {
         }
 
 
-
+       // checkChunk();
 
         if(this.neuronActions.size() > 0){
             //Iterate through and find output neurons
@@ -141,13 +174,14 @@ public class ServerOrgManager extends BaseOrgManager {
                 outputNeuron.execute();
             }
             this.neuronActions.clear();
-            if(this.state.equals(State.Spawned)){
-                this.markTicking();
 
-            }
-            fireTickables();
+
         }
 
+        this.getActionBuffer().execute();
+        for (BaseChaosEventListener eventListener : getEventListeners()) {
+            eventListener.onServerTick(this);
+        }
     }
     public void setState(State newState){
         if(state.equals(newState)){
@@ -170,6 +204,9 @@ public class ServerOrgManager extends BaseOrgManager {
             return;
         }
         setState(State.Dead);
+        for (BaseChaosEventListener eventListener : getEventListeners()) {
+            eventListener.onServerDeath(this);
+        }
     }
     public float getMaxLife(){
         return maxLifeSeconds;
@@ -196,6 +233,14 @@ public class ServerOrgManager extends BaseOrgManager {
 
     public void setDebugState(DebugState debugState) {
         this.debugState = debugState;
+    }
+
+    public void test(CCWorldEvent worldEvent) {
+        this.entityFitnessManager.test(worldEvent);
+    }
+
+    public FitnessManagerBase getEntityFitnessManager() {
+        return entityFitnessManager;
     }
 
 
