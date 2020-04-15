@@ -7,6 +7,7 @@ import com.schematical.chaoscraft.ai.OutputNeuron;
 import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.events.CCWorldEvent;
 import com.schematical.chaoscraft.fitness.managers.EntityDiscoveryFitnessManager;
+import com.schematical.chaoscraft.fitness.managers.EntityRuleFitnessManager;
 import com.schematical.chaoscraft.fitness.managers.FitnessManagerBase;
 import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
@@ -42,7 +43,7 @@ public class ServerOrgManager extends BaseOrgManager {
     public ServerOrgManager(){
 
         this.attatchEventListener(new OrgPositionManager());
-        //this.attatchEventListener(new OrgDeathListener());
+        this.attatchEventListener(new OrgDeathListener());
     }
     public void setTmpNamespace(String _tmpNamespace){
         tmpNamespace = _tmpNamespace;
@@ -69,8 +70,8 @@ public class ServerOrgManager extends BaseOrgManager {
         this.orgEntity.attachSeverOrgManager(this);
         this.orgEntity.attachNNetRaw(this.organism.getNNetRaw());
 
-        entityFitnessManager = new EntityDiscoveryFitnessManager(this);
-
+        //entityFitnessManager = new EntityDiscoveryFitnessManager(this);
+        entityFitnessManager = new EntityRuleFitnessManager(this);
         orgEntity.observableAttributeManager = new CCObservableAttributeManager(organism);
         orgEntity.setCustomName(new TranslationTextComponent(getCCNamespace()));
         orgEntity.setSpawnHash(ChaosCraft.getServer().spawnHash);

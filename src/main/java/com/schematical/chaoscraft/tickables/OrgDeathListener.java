@@ -2,6 +2,7 @@ package com.schematical.chaoscraft.tickables;
 
 import com.schematical.chaoscraft.ChaosCraft;
 import com.schematical.chaoscraft.events.CCWorldEvent;
+import com.schematical.chaoscraft.events.EntityFitnessScoreEvent;
 import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import com.schematical.chaoscraft.util.BuildArea;
@@ -21,7 +22,7 @@ public class OrgDeathListener extends BaseChaosEventListener {
         if (ChaosCraft.buildAreas.size() > 0) {
             for (BuildArea buildArea : ChaosCraft.buildAreas) {
                 if (buildArea.getCurrentServerOrgManager() != null) {
-                    if (buildArea.getCurrentServerOrgManager().equals(baseOrgManager)) {
+                    if (buildArea.getCurrentServerOrgManager().getCCNamespace().equals(buildArea.getCurrentServerOrgManager().getCCNamespace())) {
                         orgBuildArea = buildArea;
                         break;
                     }

@@ -293,34 +293,12 @@ public class ChaosCraftServer {
         for (ServerOrgManager serverOrgManager : serverOrgManagers) {
 
             if (!serverOrgManager.getEntity().isAlive()) {
-                if (ChaosCraft.buildAreas.size() > 0) {
-                    BuildArea orgBuildArea = new BuildArea();
-                    for (BuildArea buildArea : ChaosCraft.buildAreas) {
-                        if (buildArea.getCurrentServerOrgManager() != null) {
-                            if (buildArea.getCurrentServerOrgManager().equals(serverOrgManager)) {
-                                orgBuildArea = buildArea;
-                                break;
-                            }
-                        }
-                    }
-
-                    CCWorldEvent buildEvent = new CCWorldEvent(CCWorldEvent.Type.BUILD_COMPLETE);
-                    buildEvent.entity = serverOrgManager.getEntity();
-                    orgBuildArea.getBlocks(orgBuildArea.getBuildAreaEntity().getPos());
-                    buildEvent.amount = (int) orgBuildArea.getScore();
-                    buildEvent.eventType = CCWorldEvent.Type.BUILD_COMPLETE;
-                    serverOrgManager.test(buildEvent);
-                    orgBuildArea.resetScore();
-                    orgBuildArea.resetBlockPlacedCount();
-                    BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildAreaEntity().getPos(), orgBuildArea.getBuildAreaEntity().getWorld());
-                }
-
                 serverOrgManager.markDead();
-
             }
         }
         return serverOrgManagers;
     }
+
     public void loadFitnessFunctions(){
         if(
             fitnessManager != null ||

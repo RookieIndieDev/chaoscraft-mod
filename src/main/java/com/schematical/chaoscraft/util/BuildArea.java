@@ -72,7 +72,6 @@ public class BuildArea{
         switch(block){
                 case "Block{minecraft:oak_planks}":
                     areaMatrices[areaMatrixIndex].getDataRef()[row][col] = 8.0;
-
                     blockPlacedCount += 1;
                     break;
 
@@ -153,8 +152,9 @@ public class BuildArea{
             novelty = NoveltyHelper.getNovelty(totalNorm);
             if(novelty > NoveltyHelper.getHighestNovelty()){
                 NoveltyHelper.setHighestNovelty(novelty);
-                score += novelty;
+                score += novelty * 10;
             }
+            score += blockPlacedCount;
         }
 
         for(int i = 0; i < templates.length; i++){

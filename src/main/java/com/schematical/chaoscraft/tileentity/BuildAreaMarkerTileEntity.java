@@ -60,7 +60,7 @@ public class BuildAreaMarkerTileEntity extends TileEntity implements ITickableTi
             for (int j = 0; j < 12; j++) {
                     if (world != null && !world.isRemote()) {
                         currentBlock = block.add(i, 0, -j);
-                        world.setBlockState(currentBlock, Blocks.BLUE_WOOL.getDefaultState());
+                        world.setBlockState(currentBlock, Blocks.BEDROCK.getDefaultState());
                     }
                 }
             }
