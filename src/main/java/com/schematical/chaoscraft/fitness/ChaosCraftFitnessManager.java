@@ -58,7 +58,7 @@ public class ChaosCraftFitnessManager {
             }
 
             EntityFitnessRule fitnessRule = new EntityFitnessRule();
-            fitnessRule.scoreEffect = 10;
+            fitnessRule.scoreEffect = 1;
             fitnessRule.id =  CCWorldEvent.Type.BUILD_COMPLETE.toString();
             fitnessRule.eventType = CCWorldEvent.Type.BUILD_COMPLETE.toString();
             this.rules.add(fitnessRule);

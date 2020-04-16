@@ -7,8 +7,6 @@ import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import com.schematical.chaoscraft.util.BuildArea;
 
-import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
-
 public class OrgDeathListener extends BaseChaosEventListener {
 
     private CCWorldEvent buildEvent;
@@ -22,7 +20,7 @@ public class OrgDeathListener extends BaseChaosEventListener {
         if (ChaosCraft.buildAreas.size() > 0) {
             for (BuildArea buildArea : ChaosCraft.buildAreas) {
                 if (buildArea.getCurrentServerOrgManager() != null) {
-                    if (buildArea.getCurrentServerOrgManager().getCCNamespace().equals(buildArea.getCurrentServerOrgManager().getCCNamespace())) {
+                    if (buildArea.getCurrentServerOrgManager().getCCNamespace().equals(baseOrgManager.getCCNamespace())) {
                         orgBuildArea = buildArea;
                         break;
                     }

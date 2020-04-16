@@ -152,9 +152,8 @@ public class BuildArea{
             novelty = NoveltyHelper.getNovelty(totalNorm);
             if(novelty > NoveltyHelper.getHighestNovelty()){
                 NoveltyHelper.setHighestNovelty(novelty);
-                score += novelty * 10;
+                score = (novelty * 10);
             }
-            score += blockPlacedCount;
         }
 
         for(int i = 0; i < templates.length; i++){
