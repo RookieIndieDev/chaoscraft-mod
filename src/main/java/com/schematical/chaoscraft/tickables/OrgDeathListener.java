@@ -7,6 +7,8 @@ import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import com.schematical.chaoscraft.util.BuildArea;
 
+import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
+
 public class OrgDeathListener extends BaseChaosEventListener {
 
     private CCWorldEvent buildEvent;
@@ -28,13 +30,18 @@ public class OrgDeathListener extends BaseChaosEventListener {
             }
 
             buildEvent.entity = baseOrgManager.getEntity();
-            orgBuildArea.getBlocks(orgBuildArea.getBuildAreaEntity().getPos());
-            buildEvent.amount = (int) orgBuildArea.getScore();
-            buildEvent.eventType = CCWorldEvent.Type.BUILD_COMPLETE;
-            baseOrgManager.test(buildEvent);
-            orgBuildArea.resetScore();
-            orgBuildArea.resetBlockPlacedCount();
-            BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildAreaEntity().getPos(), orgBuildArea.getBuildAreaEntity().getWorld());
+            if(orgBuildArea != null){
+                orgBuildArea.getBlocks(orgBuildArea.getBuildAreaEntity().getPos());
+                buildEvent.amount = (int) orgBuildArea.getScore();
+                buildEvent.eventType = CCWorldEvent.Type.BUILD_COMPLETE;
+                baseOrgManager.test(buildEvent);
+                orgBuildArea.resetScore();
+                orgBuildArea.resetBlockPlacedCount();
+                BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildAreaEntity().getPos(), orgBuildArea.getBuildAreaEntity().getWorld());
+            }
+            else{
+                LOGGER.info("Build area not found! Org Position: " + baseOrgManager.getEntity().getPosition());
+            }
         }
     }
 }
