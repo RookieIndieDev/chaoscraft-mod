@@ -65,6 +65,7 @@ public final class NoveltyHelper {
                     }
                 }
             }
+            /*
             else{
                 KMeansPlusPlusClusterer<Norm> smallClusterer = new KMeansPlusPlusClusterer<Norm>(2);
                 if(values.size() >= smallClusterer.getK()){
@@ -84,6 +85,7 @@ public final class NoveltyHelper {
                     }
                 }
             }
+            */
         }
         return avgDist/clusterSize;
     }

@@ -176,6 +176,14 @@ public class BuildArea{
         return  norm;
     }
 
+    public int getTargetNorm(){
+        int norm = 0;
+        for(Array2DRowRealMatrix area : templates){
+            norm += area.getNorm();
+        }
+        return  norm;
+    }
+
     public void resetScore(){
         score = 0.0;
     }

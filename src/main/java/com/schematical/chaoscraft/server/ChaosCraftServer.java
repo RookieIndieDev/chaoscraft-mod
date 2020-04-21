@@ -257,8 +257,7 @@ public class ChaosCraftServer {
         orgEntity.setDesiredYaw(yaw);
         orgEntity.setLocationAndAngles(pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
 
-        orgEntity.setHeldItem(Hand.MAIN_HAND, new ItemStack(Blocks.OAK_PLANKS, 64));
-        orgEntity.getItemHandler().setStackInSlot(2, new ItemStack(Blocks.OAK_DOOR, 64));
+        //orgEntity.getItemHandler().setStackInSlot(2, new ItemStack(Blocks.OAK_DOOR, 64));
         serverOrgManager.attachOrgEntity(orgEntity);
         serverWorld.summonEntity(orgEntity);
 

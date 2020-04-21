@@ -40,7 +40,7 @@ public class OrgDeathListener extends BaseChaosEventListener {
                 BuildAreaMarkerTileEntity.resetBuildArea(orgBuildArea.getBuildAreaEntity().getPos(), orgBuildArea.getBuildAreaEntity().getWorld());
             }
             else{
-                LOGGER.info("Build area not found! Org Position: " + baseOrgManager.getEntity().getPosition());
+                LOGGER.error("Build area not found! Org Position: " + baseOrgManager.getEntity().getPosition());
             }
         }
     }

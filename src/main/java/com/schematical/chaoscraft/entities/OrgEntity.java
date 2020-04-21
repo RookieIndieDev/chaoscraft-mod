@@ -99,6 +99,8 @@ public class OrgEntity extends MobEntity {
         itemHandler.setStackInSlot(1, itemStack);*/
 
         //itemHandler.setStackInSlot(1,  new ItemStack(Items.OAK_LOG, 4));
+        itemHandler.setStackInSlot(0, new ItemStack(Blocks.OAK_PLANKS, 64));
+        itemHandler.setStackInSlot(10, new ItemStack(Blocks.OAK_DOOR, 64));
     }
     public int getSelectedItemIndex(){
         return selectedItemIndex;
