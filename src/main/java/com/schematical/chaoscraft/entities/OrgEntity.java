@@ -550,7 +550,7 @@ public class OrgEntity extends MobEntity {
 
         if(!world.isRemote) {
             if(serverOrgManager != null) {
-                //ChaosCraft.getServer().replaceAlteredBlocks(serverOrgManager);
+                ChaosCraft.getServer().replaceAlteredBlocks(serverOrgManager);
             }
            /* if (chunkTicket != null) {
                 ForgeChunkManager.releaseTicket(chunkTicket);

@@ -36,6 +36,7 @@ public class DistNormTracker extends AbstractGui {
             fontrenderer.drawString("Novelty Archive Average: " + NoveltyHelper.getAverageNovelty(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 40), 14737632);
             fontrenderer.drawString("Archive Size " + NoveltyHelper.getArchiveSize(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 50), 14737632);
             fontrenderer.drawString("Target Norm: " + ChaosCraft.buildAreas.get(0).getTargetNorm(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 60), 14737632);
+            fontrenderer.drawString("Current Norms Size: " + NoveltyHelper.getCurrentNormsSize(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 70), 14737632);
             //fontrenderer.drawString("Novel Org: " + NoveltyHelper.getMostNovelOrg(), 15, 35, 14737632);
             //fontrenderer.drawString("Norm: " + ChaosCraft.buildAreas.get(0).getAreaNorms(), 15, 15, 14737632);
         }

@@ -69,6 +69,7 @@ public class BuildArea{
     }
 
     public void updateMatrix(int row, int col, String block, int areaMatrixIndex){
+        int novelty = 0;
         switch(block){
                 case "Block{minecraft:oak_planks}":
                     areaMatrices[areaMatrixIndex].getDataRef()[row][col] = 8.0;
@@ -146,6 +147,7 @@ public class BuildArea{
         int novelty = 0;
         int totalNorm = 0;
 
+        /*
         if(blockPlacedCount > 0){
             totalNorm = getAreaNorms();
             NoveltyHelper.addToArchive(totalNorm);
@@ -155,6 +157,7 @@ public class BuildArea{
                 score = (novelty * 10);
             }
         }
+         */
 
         for(int i = 0; i < templates.length; i++){
             double diff = calculateDifference(templates[i], areaMatrices[i]);
@@ -163,6 +166,13 @@ public class BuildArea{
             }
             else if (diff <= 8 && diff > 0) {
                 score += 750;
+            }
+
+            NoveltyHelper.addToArchive((int)diff);
+            novelty = NoveltyHelper.getNovelty((int)diff);
+            if(novelty > NoveltyHelper.getHighestNovelty()){
+                NoveltyHelper.setHighestNovelty(novelty);
+                score = (novelty * 10);
             }
         }
         return score;

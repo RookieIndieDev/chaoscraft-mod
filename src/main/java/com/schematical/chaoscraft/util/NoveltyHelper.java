@@ -15,9 +15,7 @@ public final class NoveltyHelper {
     private static List<Norm> archive = new ArrayList<>();
     private static List<Norm> currentNorms = new ArrayList<>();
     private static int highestNovelty;
-    private static String orgName;
-    private static int noveltyThreshold;
-    private static KMeansPlusPlusClusterer<Norm> kMeansPlusPlusClusterer = new KMeansPlusPlusClusterer<Norm>(5);
+    private static KMeansPlusPlusClusterer<Norm> kMeansPlusPlusClusterer = new KMeansPlusPlusClusterer<Norm>(10);
 
     public static void addToArchive(int value){
         addToCurrentNorms(value);
@@ -121,33 +119,15 @@ public final class NoveltyHelper {
 
     public static void setHighestNovelty(int value){
         highestNovelty = value;
-        setNoveltyThreshold();
     }
 
     public static int getHighestNovelty(){
         return highestNovelty;
     }
 
-    public static String getMostNovelOrg(){
-        if(orgName != null){
-            return orgName;
-        }
-        return " ";
-    }
-
-    public static void setMostNovelOrg(String name){
-        orgName = name;
-    }
-
-    private static void setNoveltyThreshold(){
-        noveltyThreshold = (int)(getHighestNovelty() * 0.40);
-    }
-
-    public static int getNoveltyThreshold(){
-        return noveltyThreshold;
-    }
-
     public static int getArchiveSize(){
         return archive.size();
     }
+
+    public static int getCurrentNormsSize() { return currentNorms.size();}
 }
