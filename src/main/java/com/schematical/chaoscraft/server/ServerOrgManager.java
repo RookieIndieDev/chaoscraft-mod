@@ -13,7 +13,6 @@ import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
 import com.schematical.chaoscraft.network.packets.CCInventoryResyncEventPacket;
 import com.schematical.chaoscraft.tickables.BaseChaosEventListener;
-import com.schematical.chaoscraft.tickables.OrgDeathListener;
 import com.schematical.chaoscraft.tickables.OrgPositionManager;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.model.ChaosNetException;
@@ -35,7 +34,7 @@ public class ServerOrgManager extends BaseOrgManager {
     protected ServerPlayerEntity serverPlayerEntity;
     protected long spawnTime = 0;
     public ArrayList<CCClientOutputNeuronActionPacket> neuronActions = new ArrayList<CCClientOutputNeuronActionPacket>();
-    private float maxLifeSeconds = 60;
+    private float maxLifeSeconds = 15;
     private int respawnCount = 0;
     private int longTicksSinceStateChange = 0;
     private FitnessManagerBase entityFitnessManager;
@@ -43,7 +42,6 @@ public class ServerOrgManager extends BaseOrgManager {
     public ServerOrgManager(){
 
         this.attatchEventListener(new OrgPositionManager());
-        this.attatchEventListener(new OrgDeathListener());
     }
     public void setTmpNamespace(String _tmpNamespace){
         tmpNamespace = _tmpNamespace;
@@ -71,7 +69,8 @@ public class ServerOrgManager extends BaseOrgManager {
         this.orgEntity.attachNNetRaw(this.organism.getNNetRaw());
 
         //entityFitnessManager = new EntityDiscoveryFitnessManager(this);
-        entityFitnessManager = new EntityRuleFitnessManager(this);
+        entityFitnessManager = new EntityRuleFitnessManager( this);
+
         orgEntity.observableAttributeManager = new CCObservableAttributeManager(organism);
         orgEntity.setCustomName(new TranslationTextComponent(getCCNamespace()));
         orgEntity.setSpawnHash(ChaosCraft.getServer().spawnHash);
