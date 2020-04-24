@@ -10,6 +10,8 @@ import org.apache.commons.math3.util.FastMath;
 
 import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
 
+//TODO: Implement scoring that encourages decreasing the diff value instead of using the Novelty helper (if the novelty helper doesn't help with convergence).
+
 public class BuildArea{
     public Array2DRowRealMatrix[] templates = new Array2DRowRealMatrix[4];
     public Array2DRowRealMatrix[] areaMatrices = new Array2DRowRealMatrix[4];
