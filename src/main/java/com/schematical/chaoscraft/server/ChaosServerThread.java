@@ -44,6 +44,7 @@ public class ChaosServerThread implements Runnable {
             GetUsernameTrainingroomsTrainingroomOrganismsResult response = ChaosCraft.sdk.getUsernameTrainingroomsTrainingroomOrganisms(request);
             List<Organism> organisms = response.getOrganismCollection();
 
+
             for (Organism organism : organisms) {
                 if(!ChaosCraft.getServer().organisms.containsKey(organism.getNamespace())){
                     ChaosCraft.LOGGER.error("Server - Cant find `ChaosCraft.getServer().organisms` org: " + organism.getNamespace());
@@ -61,7 +62,7 @@ public class ChaosServerThread implements Runnable {
 
         }catch(ChaosNetException exception){
             //logger.error(exeception.getMessage());
-            ChaosCraft.getServer().consecutiveErrorCount += 1;
+             ChaosCraft.getServer().consecutiveErrorCount += 1;
 
             int statusCode = exception.sdkHttpMetadata().httpStatusCode();
             switch(statusCode){
@@ -84,7 +85,7 @@ public class ChaosServerThread implements Runnable {
         }catch(Exception exception){
             ChaosCraft.getServer().consecutiveErrorCount += 1;
 
-            ChaosCraft.LOGGER.error("ChaosServerThread Error: " + exception.getMessage() + " - exception type: " + exception.getClass().getName());
+            ChaosCraft.LOGGER.error("XChaosServerThread Error: " + exception.getMessage() + " - exception type: " + exception.getClass().getName() + "\n\n" + exception.getStackTrace());
            // ChaosCraft.getClient().thread = null;//End should cover this
 
 

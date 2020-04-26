@@ -18,7 +18,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '0.3.15.3'
+version = '0.3.16'
 group = 'com.schematical.chaoscraft' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'chaoscraft'
 
@@ -131,6 +131,7 @@ dependencies {
 //        // excluding org.json which is provided by Android
 //        exclude group: 'org.json', module: 'json'
 //    }
+    compile 'org.msgpack:msgpack-core:0.8.20'
 }
 
 shadowJar {

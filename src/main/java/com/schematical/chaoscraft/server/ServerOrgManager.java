@@ -48,6 +48,7 @@ public class ServerOrgManager extends BaseOrgManager {
     public void setTmpNamespace(String _tmpNamespace){
         tmpNamespace = _tmpNamespace;
     }
+
     public String getTmpNamespace(){
        return tmpNamespace;
     }
@@ -68,7 +69,7 @@ public class ServerOrgManager extends BaseOrgManager {
         }
         super.attachOrgEntity(orgEntity);
         this.orgEntity.attachSeverOrgManager(this);
-        this.orgEntity.attachNNetRaw(this.organism.getNNetRaw());
+        //this.orgEntity.attachNNetRaw(this.organism.getNNetRaw());
 
         //entityFitnessManager = new EntityDiscoveryFitnessManager(this);
         entityFitnessManager = new EntityRuleFitnessManager( this);
@@ -109,7 +110,7 @@ public class ServerOrgManager extends BaseOrgManager {
     }
     public void queueForSpawn() {
         if(!state.equals(State.OrgAttached)){
-            ChaosCraft.LOGGER.error("ServerOrgManager.state != " + State.Uninitialized);
+            ChaosCraft.LOGGER.error("ServerOrgManager.state != " + State.OrgAttached);
             return;
         }
 
@@ -156,7 +157,7 @@ public class ServerOrgManager extends BaseOrgManager {
         if( this.orgEntity.getBoundingBox() == null){
             return;
         }
-        if (
+       /* if (
             this.getEntity().getNNet() == null ||
             this.getEntity().getNNet().neurons == null
         ){
@@ -191,7 +192,7 @@ public class ServerOrgManager extends BaseOrgManager {
             this.neuronActions.clear();
 
 
-        }
+        }*/
 
         this.getActionBuffer().execute();
         for (BaseChaosEventListener eventListener : getEventListeners()) {

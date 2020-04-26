@@ -36,6 +36,7 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ObjectHolder;
 import org.json.simple.JSONObject;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
 public class OrgEntity extends MobEntity {
@@ -129,15 +130,16 @@ public class OrgEntity extends MobEntity {
 
     }
     public void attachNNetRaw(String nNetRaw){
-        String nNetString = nNetRaw;//nNetRaw.getNNetRaw();
+        String nNetString = null;//nNetRaw.getNNetRaw();
         JSONObject obj = null;
-
+        //MessageUnpacker messageUnpacker = MessagePack.newDefaultUnpacker(nNetRaw.getBytes(MessagePack.UTF8));
 
         try {
 
             org.json.simple.parser.JSONParser parser = new org.json.simple.parser.JSONParser();
+            //nNetString = messageUnpacker.unpackString();
             obj = (JSONObject) parser.parse(
-                nNetString
+                    nNetRaw//nNetString
             );
             nNet = new NeuralNet();
             nNet.attachEntity(this);
@@ -145,7 +147,7 @@ public class OrgEntity extends MobEntity {
             //ActionTargetSlot.init(nNet);
 
         } catch (Exception e) {
-            ChaosCraft.LOGGER.error("Failed To Decode NNet: " + getCCNamespace() + " -- " + nNetString);
+            ChaosCraft.LOGGER.error("Failed To Decode NNet: " + getCCNamespace() + " -- " + nNetRaw);
             e.printStackTrace();
         }
     }
@@ -862,7 +864,7 @@ public class OrgEntity extends MobEntity {
         if(desiredLookVec == null){
             desiredLookVec = this.getLook(1);
         }
-        this.nNet.entity.getLookController().setLookPosition(
+        this.getLookController().setLookPosition(
                 desiredLookVec.getX(),
                 desiredLookVec.getY(),
                 desiredLookVec.getZ(),

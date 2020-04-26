@@ -50,6 +50,7 @@ import org.apache.logging.log4j.Logger;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
+import org.msgpack.core.MessagePack;
 
 import java.util.ArrayList;
 
@@ -71,10 +72,12 @@ public class ChaosCraft
     public static ArrayList<BuildArea> buildAreas = new ArrayList<BuildArea>();
     public static ArrayList<BuildAreaMarkerTileEntity> buildAreaMarkers = new ArrayList<BuildAreaMarkerTileEntity>();
 
+
     public ChaosCraft() {
    /*     if(true){
             return;
         }*/
+
         config = new ChaosCraftConfig();
         config.load();
         LOGGER.info("Config Loaded - Env: " + config.env);
@@ -227,7 +230,7 @@ public class ChaosCraft
         CCTestCommand.register(event.getCommandDispatcher());
         CCHardResetCommand.register(event.getCommandDispatcher());
         CCBlockResetCommand.register(event.getCommandDispatcher());
-        server.loadFitnessFunctions();
+        server.loadRoles();
     }
 
     @SubscribeEvent

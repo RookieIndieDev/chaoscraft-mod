@@ -3,31 +3,24 @@ package com.schematical.chaoscraft.server;
 import com.amazonaws.opensdk.config.ConnectionConfiguration;
 import com.amazonaws.opensdk.config.TimeoutConfiguration;
 import com.schematical.chaoscraft.ChaosCraft;
+import com.schematical.chaoscraft.TrainingRoomRoleHolder;
 import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.entities.AlteredBlockInfo;
 import com.schematical.chaoscraft.entities.OrgEntity;
-import com.schematical.chaoscraft.events.CCWorldEvent;
 import com.schematical.chaoscraft.fitness.ChaosCraftFitnessManager;
 import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.*;
 import com.schematical.chaoscraft.server.spawnproviders.SpawnBlockPosProvider;
 import com.schematical.chaoscraft.server.spawnproviders.iServerSpawnProvider;
-import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
-import com.schematical.chaoscraft.util.BuildArea;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.item.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.stats.Stat;
-import net.minecraft.util.Hand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -37,11 +30,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.event.entity.EntityEvent;
-import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.json.simple.JSONArray;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -52,13 +40,13 @@ import java.util.List;
 
 public class ChaosCraftServer {
     public HashMap<String, ChaosCraftServerPlayerInfo> userMap = new HashMap<String, ChaosCraftServerPlayerInfo>();
-
+    private State state = State.Unitilized;
     public int consecutiveErrorCount;
     public Thread thread;
     public MinecraftServer server;
     public static int spawnHash;
     public static HashMap<String, ServerOrgManager> organisms = new HashMap<String, ServerOrgManager>();
-    public ChaosCraftFitnessManager fitnessManager;
+    public HashMap<String, TrainingRoomRoleHolder> trainingRoomRoles = new HashMap<>();
     public int longTickCount = 0;
     public int ticksSinceLastThread = -1;
     public iServerSpawnProvider spawnProvider = new SpawnBlockPosProvider();//PlayerSpawnPosProvider();
@@ -72,9 +60,9 @@ public class ChaosCraftServer {
 
     public void tick(){
         if(
-            ChaosCraft.getServer().fitnessManager == null
+           state.equals(State.Unitilized)
         ){
-            loadFitnessFunctions();
+            loadRoles();
             return;
         }
 
@@ -257,7 +245,7 @@ public class ChaosCraftServer {
         orgEntity.setDesiredYaw(yaw);
         orgEntity.setLocationAndAngles(pos.getX(), pos.getY(), pos.getZ(), yaw, pitch);
 
-        //orgEntity.getItemHandler().setStackInSlot(2, new ItemStack(Blocks.OAK_DOOR, 64));
+
         serverOrgManager.attachOrgEntity(orgEntity);
         serverWorld.summonEntity(orgEntity);
 
@@ -292,40 +280,44 @@ public class ChaosCraftServer {
         for (ServerOrgManager serverOrgManager : serverOrgManagers) {
 
             if (!serverOrgManager.getEntity().isAlive()) {
+
                 serverOrgManager.markDead();
+
             }
         }
         return serverOrgManagers;
     }
+    public void loadRoles(){
 
-    public void loadFitnessFunctions(){
+
         if(
-            fitnessManager != null ||
             ChaosCraft.config.trainingRoomNamespace == null ||
             ChaosCraft.config.trainingRoomUsernameNamespace == null
         ){
             ChaosCraft.LOGGER.error("Not enough TrainingRoom Data set");
             return;
-
         }
+        //Load the roles... package this as a single request
+        GetUsernameTrainingroomsTrainingroomPackageRequest request = new GetUsernameTrainingroomsTrainingroomPackageRequest();
+        request.setTrainingroom(ChaosCraft.config.trainingRoomNamespace);
+        request.setUsername(ChaosCraft.config.trainingRoomUsernameNamespace);
 
-        GetUsernameTrainingroomsTrainingroomFitnessrulesRequest fitnessRulesRequest = new GetUsernameTrainingroomsTrainingroomFitnessrulesRequest();
-        fitnessRulesRequest.setTrainingroom(ChaosCraft.config.trainingRoomNamespace);
-        fitnessRulesRequest.setUsername(ChaosCraft.config.trainingRoomUsernameNamespace);
+
         try {
-            GetUsernameTrainingroomsTrainingroomFitnessrulesResult result = ChaosCraft.sdk.getUsernameTrainingroomsTrainingroomFitnessrules(fitnessRulesRequest);
-            String fitnessRulesRaw = result.getTrainingRoomFitnessRules().getFitnessRulesRaw();
+            GetUsernameTrainingroomsTrainingroomPackageResult result = ChaosCraft.sdk.getUsernameTrainingroomsTrainingroomPackage(request);
+            TrainingRoomPackage trainingRoomPackage = result.getTrainingRoomPackage();
+            for (TrainingRoomRole role : trainingRoomPackage.getRoles()) {
 
-            JSONParser parser = new JSONParser();
 
-            JSONArray obj = (JSONArray) parser.parse(
-                fitnessRulesRaw
-            );
-            ChaosCraft.getServer().fitnessManager = new ChaosCraftFitnessManager();
-            ChaosCraft.getServer().fitnessManager.parseData(obj);
 
-        } catch (ParseException e) {
-            e.printStackTrace();
+
+                TrainingRoomRoleHolder trainingRoomRoleHolder = new TrainingRoomRoleHolder(role);
+
+                trainingRoomRoles.put(role.getNamespace(), trainingRoomRoleHolder);
+                state = State.FitnessLoaded;
+            }
+
+
         }catch(ChaosNetException exception) {
             //logger.error(exeception.getMessage());
             ChaosCraft.getServer().consecutiveErrorCount += 1;
@@ -345,12 +337,12 @@ public class ChaosCraftServer {
             }
             ByteBuffer byteBuffer = exception.sdkHttpMetadata().responseContent();
             String message = StandardCharsets.UTF_8.decode(byteBuffer).toString();//new String(byteBuffer.as().array(), StandardCharsets.UTF_8 );
-            ChaosCraft.LOGGER.error("ChaosServerThread  Error: " + message + " - statusCode: " + statusCode);
+            ChaosCraft.LOGGER.error("loadRoles  Error: " + message + " - statusCode: " + statusCode);
             exception.printStackTrace();
         }catch(Exception exception){
            // ChaosCraft.getServer().consecutiveErrorCount += 1;
 
-            ChaosCraft.LOGGER.error("ChaosServerThread Error: " + exception.getMessage() + " - exception type: " + exception.getClass().getName());
+            ChaosCraft.LOGGER.error("loadRoles Error: " + exception.getMessage() + " - exception type: " + exception.getClass().getName());
             // ChaosCraft.getClient().thread = null;//End should cover this
 
 
@@ -683,5 +675,9 @@ public class ChaosCraftServer {
 
 
         }
+    }
+    public enum State{
+        Unitilized,
+        FitnessLoaded
     }
 }
