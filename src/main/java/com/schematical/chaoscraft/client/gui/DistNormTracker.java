@@ -30,15 +30,15 @@ public class DistNormTracker extends AbstractGui {
                 fontrenderer.drawString("Score :" + ChaosCraft.buildAreas.get(i).getScore(), 15, (25 * i) + 25, 14737632);
                 fontrenderer.drawString("Norm of Area " + (i + 1) + " " + ChaosCraft.buildAreas.get(i).getAreamatrixNorm(), 15, (35 * i) + 35, 14737632);
             }
-             */
+
             fontrenderer.drawString("Average Norm: " + NoveltyHelper.getAverage(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 20), 14737632);
             fontrenderer.drawString("Highest Novelty: " + NoveltyHelper.getHighestNovelty(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 30), 14737632);
             fontrenderer.drawString("Novelty Archive Average: " + NoveltyHelper.getAverageNovelty(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 40), 14737632);
             fontrenderer.drawString("Archive Size " + NoveltyHelper.getArchiveSize(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 50), 14737632);
             fontrenderer.drawString("Target Norm: " + ChaosCraft.buildAreas.get(0).getTargetNorm(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 60), 14737632);
             fontrenderer.drawString("Current Norms Size: " + NoveltyHelper.getCurrentNormsSize(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 70), 14737632);
-            //fontrenderer.drawString("Novel Org: " + NoveltyHelper.getMostNovelOrg(), 15, 35, 14737632);
-            //fontrenderer.drawString("Norm: " + ChaosCraft.buildAreas.get(0).getAreaNorms(), 15, 15, 14737632);
+             */
+            fontrenderer.drawString("Lowest Diff: " + ChaosCraft.buildAreas.get(0).getLowestDiffValue(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 20), 14737632);
         }
         RenderSystem.popMatrix();
     }

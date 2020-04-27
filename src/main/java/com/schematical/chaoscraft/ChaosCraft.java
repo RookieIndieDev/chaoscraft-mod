@@ -50,7 +50,6 @@ import org.apache.logging.log4j.Logger;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
-import org.msgpack.core.MessagePack;
 
 import java.util.ArrayList;
 

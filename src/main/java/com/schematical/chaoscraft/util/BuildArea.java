@@ -19,6 +19,7 @@ public class BuildArea{
     private ServerOrgManager currentServerOrgManager;
     private double score;
     private int blockPlacedCount = 0;
+    private int lowestDiffValue = 0;
 
     public void resetBlockPlacedCount(){
         blockPlacedCount = 0;
@@ -147,7 +148,6 @@ public class BuildArea{
 
     public double getScore(){
         int novelty = 0;
-        int totalNorm = 0;
 
         /*
         if(blockPlacedCount > 0){
@@ -169,15 +169,27 @@ public class BuildArea{
             else if (diff <= 8 && diff > 0) {
                 score += 750;
             }
-
+            /*
             NoveltyHelper.addToArchive((int)diff);
             novelty = NoveltyHelper.getNovelty((int)diff);
             if(novelty > NoveltyHelper.getHighestNovelty()){
                 NoveltyHelper.setHighestNovelty(novelty);
                 score = (novelty * 10);
             }
+             */
+            if(lowestDiffValue == 0){
+                lowestDiffValue = (int)diff;
+            }
+            else if (diff < lowestDiffValue){
+                score += (FastMath.abs(diff - lowestDiffValue)) * 10;
+                lowestDiffValue = (int)diff;
+            }
         }
         return score;
+    }
+
+    public int getLowestDiffValue(){
+        return lowestDiffValue;
     }
 
     public int getAreaNorms(){
