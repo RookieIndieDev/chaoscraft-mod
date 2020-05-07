@@ -260,12 +260,13 @@ public class ChaosCraftServer {
         ChaosNetworkManager.sendTo(
                 new CCServerEntitySpawnedPacket(
                         serverOrgManager.getCCNamespace(),
-                        serverOrgManager.getEntity().getEntityId()
+                        serverOrgManager.getEntity().getEntityId(),
+                        (int) (serverOrgManager.getEntity().world.getGameTime() + ((serverOrgManager.getMaxLife() - serverOrgManager.getAgeSeconds()) * 20))
                 ),
                 serverPlayerEntity
         );
     }
-    public void processClientOutputNeuronActionPacket(CCClientOutputNeuronActionPacket message){
+   /* public void processClientOutputNeuronActionPacket(CCClientOutputNeuronActionPacket message){
         if(!organisms.containsKey(message.getOrgNamespace())){
             //ChaosCraft.LOGGER.error("Server Cannot find org to process neuron action packet: " + message.getOrgNamespace());
             return;
@@ -273,7 +274,7 @@ public class ChaosCraftServer {
         ServerOrgManager serverOrgManager = organisms.get(message.getOrgNamespace());
         serverOrgManager.queueOutputNeuronAction(message);
 
-    }
+    }*/
     public List<ServerOrgManager> checkForDeadOrgs(){
 
         List<ServerOrgManager> serverOrgManagers = getOrgsWithState(ServerOrgManager.State.Ticking);
@@ -529,7 +530,7 @@ public class ChaosCraftServer {
                 observingPlayers.add(serverPlayerInfo);
             }else if( serverPlayerInfo.state.equals(ChaosCraftServerPlayerInfo.State.ObservingActive)) {
                 if(
-                        !serverPlayerInfo.observingEntity.getState().equals(ServerOrgManager.State.Ticking)
+                    !serverPlayerInfo.observingEntity.getState().equals(ServerOrgManager.State.Ticking)
                 ) {
                     serverPlayerInfo.state = ChaosCraftServerPlayerInfo.State.None;
                     serverPlayerInfo.observingEntity = null;

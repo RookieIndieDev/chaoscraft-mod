@@ -3,6 +3,7 @@ package com.schematical.chaoscraft.ai;
 
 import com.schematical.chaoscraft.Enum;
 import com.schematical.chaoscraft.ai.activators.*;
+import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaosnet.model.ChaosNetException;
 import net.minecraft.entity.LivingEntity;
 import org.json.simple.JSONArray;
@@ -39,10 +40,8 @@ public abstract class NeuronBase extends InnovationBase {
     public void setDebugEntity(LivingEntity debugEntity){
         this.debugEntity = debugEntity;
     }
-    public LivingEntity getEntity(){
-        if(debugEntity != null){
-            return debugEntity;
-        }
+    public OrgEntity getEntity(){
+
         return nNet.entity;
     }
     public void parseData(JSONObject jsonObject){
@@ -116,7 +115,7 @@ public abstract class NeuronBase extends InnovationBase {
             return getCurrentValue();
         }
         nNet.neuronEvalDepth += 1;
-        if (nNet.neuronEvalDepth > 45) {
+        if (nNet.neuronEvalDepth > 65) {
             throw new ChaosNetException("Max Eval Depth Hit: " + this.nNet.entity.getCCNamespace() + "   " + this.id);
         }
         float totalScore = 0;

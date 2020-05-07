@@ -2,8 +2,10 @@ package com.schematical.chaoscraft.server;
 
 import com.schematical.chaoscraft.BaseOrgManager;
 import com.schematical.chaoscraft.ChaosCraft;
+import com.schematical.chaoscraft.TrainingRoomRoleHolder;
 import com.schematical.chaoscraft.ai.CCObservableAttributeManager;
 import com.schematical.chaoscraft.ai.OutputNeuron;
+import com.schematical.chaoscraft.ai.outputs.rawnav.RawOutputNeuron;
 import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.events.CCWorldEvent;
 import com.schematical.chaoscraft.fitness.managers.EntityDiscoveryFitnessManager;
@@ -13,18 +15,28 @@ import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
 import com.schematical.chaoscraft.network.packets.CCInventoryResyncEventPacket;
 import com.schematical.chaoscraft.tickables.BaseChaosEventListener;
+import com.schematical.chaoscraft.tickables.ChaosTeamTracker;
 import com.schematical.chaoscraft.tickables.OrgDeathListener;
 import com.schematical.chaoscraft.tickables.OrgPositionManager;
+import com.schematical.chaoscraft.util.ChaosSettings;
+import com.schematical.chaoscraft.util.SettingsMap;
 import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.model.ChaosNetException;
 import com.schematical.chaosnet.model.Organism;
+import com.schematical.chaosnet.model.TrainingRoomRole;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TranslationTextComponent;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,14 +47,18 @@ public class ServerOrgManager extends BaseOrgManager {
     protected ServerPlayerEntity serverPlayerEntity;
     protected long spawnTime = 0;
     public ArrayList<CCClientOutputNeuronActionPacket> neuronActions = new ArrayList<CCClientOutputNeuronActionPacket>();
-    private float maxLifeSeconds = 60;
+    private float maxLifeSeconds = 15;
     private int respawnCount = 0;
     private int longTicksSinceStateChange = 0;
     private FitnessManagerBase entityFitnessManager;
     public ChunkPos currChunkPos;
+    private HashMap<String, RawOutputNeuron> rawOutputNeurons = new HashMap();
+    private SettingsMap roleSettings;
+
     public ServerOrgManager(){
 
         this.attatchEventListener(new OrgPositionManager());
+        this.attatchEventListener(new ChaosTeamTracker());
         this.attatchEventListener(new OrgDeathListener());
     }
     public void setTmpNamespace(String _tmpNamespace){
@@ -58,7 +74,10 @@ public class ServerOrgManager extends BaseOrgManager {
             ChaosCraft.LOGGER.error(getCCNamespace() + " - has invalid state: " + state);
             return;
         }
+
         super.attachOrganism(organism);
+        TrainingRoomRoleHolder trainingRoomRoleHolder = ChaosCraft.getServer().trainingRoomRoles.get(this.organism.getTrainingRoomRoleNamespace());
+        roleSettings = new SettingsMap(trainingRoomRoleHolder.trainingRoomRole.getSettings());
         setState(State.OrgAttached);
     }
     @Override
@@ -81,6 +100,27 @@ public class ServerOrgManager extends BaseOrgManager {
 
         setState(State.Spawned);
         triggerOnSpawned();
+        this.orgEntity.addTag("role-" + this.organism.getTrainingRoomRoleNamespace());
+
+    }
+    private void initInventory(){
+        for(int i = 0; i < 4; i++) {
+            String invValue = this.roleSettings.getString(ChaosSettings.valueOf("INV_" + i));
+            if (invValue != null) {
+                String[] parts = invValue.split("@");
+                int count = 1;
+                String id = parts[0];
+                if (parts.length > 1) {
+                    count = Integer.parseInt(parts[1]);
+                }
+
+                GameRegistry.findRegistry(Item.class);
+                Item item = (Item) ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
+                ItemStack itemStack = new ItemStack(item, count);
+                this.orgEntity.getItemHandler().setStackInSlot(i, itemStack);
+                this.orgEntity.syncSlot(i);
+            }
+        }
     }
     public void setPlayerEntity(ServerPlayerEntity serverPlayerEntity){
         if(!state.equals(State.Uninitialized)){
@@ -157,6 +197,7 @@ public class ServerOrgManager extends BaseOrgManager {
         if( this.orgEntity.getBoundingBox() == null){
             return;
         }
+
        /* if (
             this.getEntity().getNNet() == null ||
             this.getEntity().getNNet().neurons == null
@@ -193,8 +234,23 @@ public class ServerOrgManager extends BaseOrgManager {
 
 
         }*/
+        if(
+            this.rawOutputNeurons.size() > 0
+        ) {
+            if (state.equals(State.Spawned)) {
+                initInventory();
+                markTicking();
+            }
 
-        this.getActionBuffer().execute();
+            for (RawOutputNeuron rawOutputNeuron : this.rawOutputNeurons.values()) {
+                if (rawOutputNeuron.getServerValue() != null) {
+                    rawOutputNeuron.execute();
+                    rawOutputNeuron.markExecuted();
+                }
+            }
+        }else {
+            this.getActionBuffer().execute();
+        }
         for (BaseChaosEventListener eventListener : getEventListeners()) {
             eventListener.onServerTick(this);
         }
@@ -257,6 +313,21 @@ public class ServerOrgManager extends BaseOrgManager {
 
     public FitnessManagerBase getEntityFitnessManager() {
         return entityFitnessManager;
+    }
+
+    public RawOutputNeuron getRawOutputNeuron(String id) {
+        if(!rawOutputNeurons.containsKey(id)){
+            return null;
+        }
+        return this.rawOutputNeurons.get(id);
+    }
+    public void addRawOutputNeuron(RawOutputNeuron rawOutputNeuron){
+        rawOutputNeuron.rawAttach(this);
+        this.rawOutputNeurons.put(rawOutputNeuron.id, rawOutputNeuron);
+    }
+
+    public SettingsMap getRoleSettings() {
+        return this.roleSettings;
     }
 
 

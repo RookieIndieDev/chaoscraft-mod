@@ -3,14 +3,16 @@ package com.schematical.chaoscraft.util;
 import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftGame;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.math.BlockPos;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.util.FastMath;
 
 import static com.schematical.chaoscraft.ChaosCraft.LOGGER;
-
-//TODO: Implement scoring that encourages decreasing the diff value instead of using the Novelty helper (if the novelty helper doesn't help with convergence).
 
 public class BuildArea{
     public Array2DRowRealMatrix[] templates = new Array2DRowRealMatrix[4];
@@ -19,7 +21,7 @@ public class BuildArea{
     private ServerOrgManager currentServerOrgManager;
     private double score;
     private int blockPlacedCount = 0;
-    private int lowestDiffValue = 0;
+    private static int lowestDiffValue = 0;
 
     public void resetBlockPlacedCount(){
         blockPlacedCount = 0;
@@ -187,7 +189,7 @@ public class BuildArea{
         }
         return score;
     }
-
+    
     public int getLowestDiffValue(){
         return lowestDiffValue;
     }

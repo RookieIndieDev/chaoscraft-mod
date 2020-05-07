@@ -38,15 +38,17 @@ public class DistNormTracker extends AbstractGui {
             fontrenderer.drawString("Target Norm: " + ChaosCraft.buildAreas.get(0).getTargetNorm(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 60), 14737632);
             fontrenderer.drawString("Current Norms Size: " + NoveltyHelper.getCurrentNormsSize(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 70), 14737632);        
              */
+            /*
             int lowestDiffValue = ChaosCraft.buildAreas.get(0).getLowestDiffValue();
             for(int i = 0; i < ChaosCraft.buildAreas.size(); i++){
                 int diff = ChaosCraft.buildAreas.get(i).getLowestDiffValue();
-                if(lowestDiffValue < diff){
+                if(diff < lowestDiffValue && diff != 0){
                     lowestDiffValue = diff;
                 }
             }
+             */
 
-            fontrenderer.drawString("Lowest Diff: " + lowestDiffValue, (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 20), 14737632);
+            fontrenderer.drawString("Lowest Diff: " + ChaosCraft.buildAreas.get(0).getLowestDiffValue(), (float)((Minecraft.getInstance().getMainWindow().getScaledWidth() / 2) + 20), (float)((Minecraft.getInstance().getMainWindow().getScaledHeight() / 2) + 20), 14737632);
         }
         RenderSystem.popMatrix();
     }

@@ -6,6 +6,7 @@ import com.schematical.chaoscraft.ai.CCObservableAttributeManager;
 import com.schematical.chaoscraft.ai.CCObserviableAttributeCollection;
 import com.schematical.chaoscraft.ai.NeuralNet;
 import com.schematical.chaoscraft.ai.OutputNeuron;
+import com.schematical.chaoscraft.ai.outputs.rawnav.RawOutputNeuron;
 import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.events.CCWorldEvent;
 import com.schematical.chaoscraft.events.OrgEvent;
@@ -13,7 +14,9 @@ import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
 import com.schematical.chaoscraft.network.packets.CCInventoryChangeEventPacket;
 import com.schematical.chaoscraft.server.ServerOrgManager;
+import com.schematical.chaoscraft.util.ChaosTarget;
 import com.schematical.chaosnet.model.ChaosNetException;
+import com.schematical.chaosnet.model.Organism;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -26,7 +29,6 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUseContext;
-import net.minecraft.item.Items;
 import net.minecraft.item.crafting.*;
 import net.minecraft.util.*;
 import net.minecraft.util.math.*;
@@ -36,7 +38,6 @@ import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ObjectHolder;
 import org.json.simple.JSONObject;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public class OrgEntity extends MobEntity {
@@ -60,7 +61,7 @@ public class OrgEntity extends MobEntity {
     protected double desiredPitch;
     protected double desiredYaw;
     protected double desiredHeadYaw;
-
+    protected ChaosTarget chaosTarget;
 
 
     //Mining related variables
@@ -104,6 +105,28 @@ public class OrgEntity extends MobEntity {
        //setHeldItem(Hand.MAIN_HAND,  itemHandler.getStackInSlot(1));
         itemHandler.setStackInSlot(0, new ItemStack(Blocks.OAK_PLANKS, 64));
         itemHandler.setStackInSlot(10, new ItemStack(Blocks.OAK_DOOR, 64));
+    }
+    public String getTrainingRoomRoleNamespace(){
+
+        String ROLE_TAG_PREFIX = "role-";
+        if(clientOrgManager != null) {
+            Organism organism = clientOrgManager.getOrganism();
+           return organism.getTrainingRoomRoleNamespace();
+
+        }else {
+            for (String tag : getTags()) {
+                if (tag.substring(0, ROLE_TAG_PREFIX.length()).equals(ROLE_TAG_PREFIX)) {
+                    return tag.substring(ROLE_TAG_PREFIX.length());
+                }
+            }
+        }
+        return null;
+    }
+    public ChaosTarget getChaosTarget(){
+        if(chaosTarget == null){
+            chaosTarget = new ChaosTarget(this);
+        }
+        return chaosTarget;
     }
     public int getSelectedItemIndex(){
         return selectedItemIndex;
@@ -431,7 +454,7 @@ public class OrgEntity extends MobEntity {
         return outputStack;
     }
 
-    private void syncSlot(int i) {
+    public void syncSlot(int i) {
         CCInventoryChangeEventPacket pkt = new CCInventoryChangeEventPacket(
                 getCCNamespace(),
                 selectedItemIndex,
@@ -462,7 +485,7 @@ public class OrgEntity extends MobEntity {
         Vec3d vec3d = this.getEyePosition( 1.0F);
         //Vec3d vec3d1 = this.getLook(1);
 
-        Vec3d vec3d1 = this.getLook( 1.0F).scale(25);
+        Vec3d vec3d1 = this.getLook( 1.0F).scale(blockReachDistance);
         Vec3d vec3d2 = vec3d.add(
             vec3d1
         );
@@ -919,12 +942,11 @@ public class OrgEntity extends MobEntity {
                 if(outputNeuron.executeSide.equals(OutputNeuron.ExecuteSide.Client)){
                     outputNeuron.execute();
                 }else {
-                    CCClientOutputNeuronActionPacket packet = new CCClientOutputNeuronActionPacket(
-                            clientOrgManager.getCCNamespace(),
-                            outputNeuron.id,
-                            outputNeuron.getCurrentValue()
-                    );
-                    ChaosNetworkManager.sendToServer(packet);
+                    if(outputNeuron instanceof RawOutputNeuron) {
+                        RawOutputNeuron rawOutputNeuron = (RawOutputNeuron) outputNeuron;
+                        CCClientOutputNeuronActionPacket packet = new CCClientOutputNeuronActionPacket(rawOutputNeuron);
+                        ChaosNetworkManager.sendToServer(packet);
+                    }
                 }
 
 
@@ -1126,6 +1148,7 @@ public class OrgEntity extends MobEntity {
         this.itemHandler.setStackInSlot(index, itemStack);
         this.selectedItemIndex = selectedItemIndex;
     }
+
     public enum CanCraftResults{
         Success,
         Fail_2X2,
