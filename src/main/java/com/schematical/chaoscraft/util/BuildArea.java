@@ -1,5 +1,6 @@
 package com.schematical.chaoscraft.util;
 
+import com.schematical.chaoscraft.ChaosCraft;
 import com.schematical.chaoscraft.server.ServerOrgManager;
 import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import net.minecraft.block.Block;
@@ -165,6 +166,7 @@ public class BuildArea{
 
         for(int i = 0; i < templates.length; i++){
             double diff = calculateDifference(templates[i], areaMatrices[i]);
+            LOGGER.info("Diff " + i + ": " + diff);
             if(diff == 0){
                 score += 1000;
             }
