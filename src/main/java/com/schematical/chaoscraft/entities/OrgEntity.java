@@ -103,8 +103,8 @@ public class OrgEntity extends MobEntity {
 
         //itemHandler.setStackInSlot(1,  new ItemStack(Items.STONE_PICKAXE, 1));
        //setHeldItem(Hand.MAIN_HAND,  itemHandler.getStackInSlot(1));
-        itemHandler.setStackInSlot(0, new ItemStack(Blocks.OAK_PLANKS, 64));
-        itemHandler.setStackInSlot(1, new ItemStack(Blocks.OAK_DOOR, 64));
+        //itemHandler.setStackInSlot(0, new ItemStack(Blocks.OAK_PLANKS, 64));
+        //itemHandler.setStackInSlot(1, new ItemStack(Blocks.OAK_DOOR, 64));
     }
     public String getTrainingRoomRoleNamespace(){
 
