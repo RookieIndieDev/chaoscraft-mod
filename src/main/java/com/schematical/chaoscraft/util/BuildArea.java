@@ -22,7 +22,7 @@ public class BuildArea{
     private ServerOrgManager currentServerOrgManager;
     private double score;
     private int blockPlacedCount = 0;
-    private static int lowestDiffValue = 0;
+    private static int lowestDiffValue = -1;
 
     public void resetBlockPlacedCount(){
         blockPlacedCount = 0;
@@ -181,7 +181,7 @@ public class BuildArea{
                 score = (novelty * 10);
             }
              */
-            if(lowestDiffValue == 0){
+            if(lowestDiffValue == -1){
                 lowestDiffValue = (int)diff;
             }
             else if (diff < lowestDiffValue){
