@@ -1,8 +1,11 @@
 package com.schematical.chaoscraft.ai.action;
 
+import com.schematical.chaoscraft.ai.memory.BlockStateMemoryBufferSlot;
+import com.schematical.chaoscraft.client.ClientOrgManager;
 import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.util.ChaosTarget;
 import com.schematical.chaoscraft.util.ChaosTargetItem;
+import com.schematical.chaosnet.model.ChaosNetException;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.BlockItem;
@@ -17,8 +20,8 @@ public class PlaceBlockAction extends NavigateToAction{
     protected void _tick() {
         tickLook();
         if(
-                !getTarget().canEntityTouch(getOrgEntity()) &&
-                !getTarget().isEntityLookingAt(getOrgEntity())
+            !getTarget().canEntityTouch(getOrgEntity()) &&
+            !getTarget().isEntityLookingAt(getOrgEntity())
         ){
             tickNavigate();
             return;
@@ -38,13 +41,34 @@ public class PlaceBlockAction extends NavigateToAction{
         BlockPos placedBlockPos = rayTraceResult.getPos().offset(rayTraceResult.getFace());
         BlockState blockState = getOrgEntity().world.getBlockState(placedBlockPos);
         if(blockState.isSolid()){
+            setCorrectedChaosTarget(new ChaosTarget(placedBlockPos));
             markCompleted();
+
         }else{
-            markFailed();//TODO: figure out how this is possible
+           // markFailed();//TODO: figure out how this is possible
             //throw new ChaosNetException("Something went wrong. The placed block area is empty. Was trying to place: " + itemStack.getItem().getRegistryName().toString());
         }
     }
+    public void onClientMarkCompleted() {
+        ClientOrgManager clientOrgManager = (ClientOrgManager) this.getActionBuffer().getOrgManager();
+        /*BlockRayTraceResult rayTraceResult = getOrgEntity().rayTraceBlocks(getOrgEntity().REACH_DISTANCE);
+        if(rayTraceResult == null){
+            throw new ChaosNetException("null rayTraceResult onClientMarkCompleted");
+        }
 
+        BlockPos placedBlockPos = rayTraceResult.getPos().offset(rayTraceResult.getFace());*/
+        ChaosTarget correctedChaosTarget = this.getCorrectedChaosTarget();
+        if(correctedChaosTarget == null){
+            throw new ChaosNetException("`correctedChaosTarget` should not be null in `PlaceBlockAction`");
+        }
+        BlockStateMemoryBufferSlot blockStateMemoryBufferSlot = new BlockStateMemoryBufferSlot(correctedChaosTarget.getTargetBlockPos());
+        blockStateMemoryBufferSlot.debugBlockPos = this.getTarget().getTargetBlockPos();
+        blockStateMemoryBufferSlot.ownerEntityId = getOrgEntity().getEntityId();
+        clientOrgManager.getBlockStateMemory().put(
+            this.getCorrectedChaosTarget().getTargetBlockPos(),
+            blockStateMemoryBufferSlot
+        );
+    }
 
     public static boolean validateTarget(OrgEntity orgEntity, ChaosTarget chaosTarget) {
         if(chaosTarget.getTargetBlockPos() == null){

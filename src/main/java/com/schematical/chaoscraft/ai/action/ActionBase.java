@@ -10,6 +10,7 @@ import com.schematical.chaosnet.model.ChaosNetException;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.items.ItemStackHandler;
 
@@ -26,7 +27,7 @@ public abstract class ActionBase {
     private ChaosTarget target;
     private ChaosTargetItem targetItem;
     public ArrayList<CCServerScoreEventPacket> scoreEvents = new ArrayList<CCServerScoreEventPacket>();
-
+    private ChaosTarget correctedChaosTarget;
     //TODO: Track score events that happened when this action was happening
 
 
@@ -54,15 +55,24 @@ public abstract class ActionBase {
         _tick();
 
     }
+    public void setCorrectedChaosTarget(ChaosTarget correctedChaosTarget){
+       /* if(!this.actionBuffer.isServer()){
+            throw new ChaosNetException("Client should not be `setCorrectedChaosTarget`");
+        }*/
+        this.correctedChaosTarget = correctedChaosTarget;
+    }
     public void tickFirst(){
         enforceItemEquip();
     }
     public void enforceItemEquip(){
         if(this.getTargetItem() != null) {
             if (this.getTargetItem().getInventorySlot() != null) {
-                if (this.getOrgEntity().getSelectedItemIndex() != this.getTargetItem().getInventorySlot()) {
+                /*if (
+                    this.getOrgEntity().getSelectedItemIndex() != this.getTargetItem().getInventorySlot()
+
+                ) {*/
                     this.getOrgEntity().equipSlot(this.getTargetItem().getInventorySlot());
-                }
+                //}
             }
         }
     }
@@ -108,9 +118,10 @@ public abstract class ActionBase {
         return actionBuffer.getOrgManager().getEntity();
     }
     public void markCompleted(){
-        /*if(!this.actionBuffer.isServer()){
-            throw new ChaosNetException("Client should not be changing `actionBuffer` state");
-        }*/
+        if(this.actionBuffer.isServer()){
+            ServerOrgManager serverOrgManager = (ServerOrgManager)this.actionBuffer.getOrgManager();
+            serverOrgManager.triggerServerActionComplete(this);
+        }
         if(!this.state.equals(ActionState.Running)){
             throw new ChaosNetException("Invalid `ActionBase.state`: " + this.state);
         }
@@ -257,6 +268,13 @@ public abstract class ActionBase {
         } catch (InvocationTargetException e) {
             throw new ChaosNetException(e.getMessage());
         }
+    }
+
+    public void onClientMarkCompleted() {
+    }
+
+    protected ChaosTarget getCorrectedChaosTarget() {
+        return correctedChaosTarget;
     }
 
     public enum ActionState{

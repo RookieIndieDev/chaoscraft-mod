@@ -5,7 +5,6 @@ import com.amazonaws.opensdk.config.ConnectionConfiguration;
 import com.amazonaws.opensdk.config.TimeoutConfiguration;
 import com.schematical.chaoscraft.blocks.ChaosBlocks;
 import com.schematical.chaoscraft.client.*;
-import com.schematical.chaoscraft.client.gui.ChaosAuthOverlayGui;
 import com.schematical.chaoscraft.commands.*;
 import com.schematical.chaoscraft.entities.OrgEntity;
 import com.schematical.chaoscraft.entities.OrgEntityRenderer;
@@ -14,11 +13,8 @@ import com.schematical.chaoscraft.network.ChaosNetworkManager;
 
 import com.schematical.chaoscraft.server.ChaosCraftServer;
 
-import com.schematical.chaoscraft.tileentity.BuildAreaMarkerTileEntity;
 import com.schematical.chaoscraft.tileentity.ChaosTileEntity;
-import com.schematical.chaoscraft.util.BuildArea;
 import com.schematical.chaosnet.ChaosNetClientBuilder;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
@@ -54,8 +50,6 @@ import com.schematical.chaosnet.ChaosNet;
 import com.schematical.chaosnet.auth.ChaosnetCognitoUserPool;
 import com.schematical.chaosnet.model.*;
 
-import java.util.ArrayList;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -74,8 +68,6 @@ public class ChaosCraft
 
     private static ChaosCraftClient client;
     private static ChaosCraftServer server;
-    public static ArrayList<BuildArea> buildAreas = new ArrayList<BuildArea>();
-    public static ArrayList<BuildAreaMarkerTileEntity> buildAreaMarkers = new ArrayList<BuildAreaMarkerTileEntity>();
 
 
     public ChaosCraft() {
@@ -256,7 +248,7 @@ public class ChaosCraft
         CCTestCommand.register(event.getCommandDispatcher());
         CCHardResetCommand.register(event.getCommandDispatcher());
         CCBlockResetCommand.register(event.getCommandDispatcher());
-        server.loadRoles();
+        server.loadTrainingRoomPackage();
     }
 
     @SubscribeEvent

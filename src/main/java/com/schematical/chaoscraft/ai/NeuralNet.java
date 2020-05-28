@@ -101,7 +101,7 @@ public class NeuralNet {
             while (iterator.hasNext()) {
                 JSONObject outputBaseJSON = iterator.next();
 
-                String clsName = outputBaseJSON.get("$TYPE").toString();  // use fully qualified name
+                String clsName = outputBaseJSON.get("$BT").toString();  // use fully qualified name
 
 
                 String fullClassName = "com.schematical.chaoscraft.ai.biology." + clsName;
@@ -164,6 +164,10 @@ public class NeuralNet {
                 break;
             case("i"):
                 baseType = Enum.INPUT.toLowerCase();
+                potentialPaths.add(baseType + "s.team");
+                potentialPaths.add(baseType + "s.targetcandidate");
+                potentialPaths.add(baseType + "s.actioncandidate");
+
                 break;
             case("m"):
                 baseType = Enum.MIDDLE.toLowerCase();
