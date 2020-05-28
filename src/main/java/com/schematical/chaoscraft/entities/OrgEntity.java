@@ -1002,14 +1002,20 @@ public class OrgEntity extends MobEntity {
                 this.itemHandler.insertItem(i, stack, false);
                 CCWorldEvent worldEvent = new CCWorldEvent(CCWorldEvent.Type.ITEM_COLLECTED);
                 worldEvent.item = worldEventItem;
-                serverOrgManager.test(worldEvent);
-
                 if (observableAttributeManager != null) {
                     observableAttributeManager.Observe(worldEventItem);
                     //TODO: Recheck what you can craft
                     observableAttributeManager.ObserveCraftableRecipes(this);
                 }
-                syncSlot(i);
+                if(serverOrgManager != null) {
+
+                    serverOrgManager.test(worldEvent);
+
+                    syncSlot(i);
+                }
+
+
+
                 return true;
             }
 
