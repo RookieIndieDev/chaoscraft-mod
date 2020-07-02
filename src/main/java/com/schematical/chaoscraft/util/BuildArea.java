@@ -185,7 +185,7 @@ public class BuildArea{
                 lowestDiffValue = (int)diff;
             }
             else if (diff < lowestDiffValue){
-                score += (FastMath.abs(diff - lowestDiffValue)) * 10;
+                score += (FastMath.abs(diff - lowestDiffValue)) * 100;
                 lowestDiffValue = (int)diff;
             }
         }

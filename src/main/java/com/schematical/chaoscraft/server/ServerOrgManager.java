@@ -59,7 +59,7 @@ public class ServerOrgManager extends BaseOrgManager {
         this.attatchEventListener(new OrgPositionManager());
         //this.attatchEventListener(new ChaosTeamTracker());
         //this.attatchEventListener(new BuildyManager());
-        this.attatchEventListener(new OrgDeathListener());
+        //this.attatchEventListener(new OrgDeathListener());
     }
     public void setTmpNamespace(String _tmpNamespace){
         tmpNamespace = _tmpNamespace;

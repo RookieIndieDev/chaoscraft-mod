@@ -55,13 +55,13 @@ public class ChaosCraftClient {
     private ChaosPlayerNeuronTestScreen chaosPlayerNeuronTestScreen;
     private ChaosObserveOverlayScreen chaosObserveOverlayScreen;
     private ArrayList<iRenderWorldLastEvent> renderListeners = new ArrayList<>();
-    private DistNormTracker distNormTracker;
+    //private DistNormTracker distNormTracker;
 
 
     public ChaosCraftClient(Minecraft minecraft) {
         this.minecraft = minecraft;
         chaosObserveOverlayScreen = new ChaosObserveOverlayScreen(this.minecraft);
-        distNormTracker = new DistNormTracker();
+        //distNormTracker = new DistNormTracker();
 
     }
     public void loadTrainingRoomPackage(){
@@ -157,10 +157,10 @@ public class ChaosCraftClient {
             chaosObserveOverlayScreen.render();
         }
 
-        if(distNormTracker != null)
+/*        if(distNormTracker != null)
         {
             distNormTracker.render();
-        }
+        }*/
     }
     public void setTrainingRoomInfo(ServerIntroInfoPacket serverInfo) {
         trainingRoomNamespace = serverInfo.getTrainingRoomNamespace();
