@@ -16,7 +16,10 @@ import com.schematical.chaoscraft.network.ChaosNetworkManager;
 import com.schematical.chaoscraft.network.packets.CCClientOrgUpdatePacket;
 import com.schematical.chaoscraft.network.packets.CCClientOutputNeuronActionPacket;
 import com.schematical.chaoscraft.network.packets.CCInventoryResyncEventPacket;
-import com.schematical.chaoscraft.tickables.*;
+import com.schematical.chaoscraft.tickables.BaseChaosEventListener;
+import com.schematical.chaoscraft.tickables.BuildyManager;
+import com.schematical.chaoscraft.tickables.ChaosTeamTracker;
+import com.schematical.chaoscraft.tickables.OrgPositionManager;
 import com.schematical.chaoscraft.util.ChaosSettings;
 import com.schematical.chaoscraft.util.SettingsMap;
 import com.schematical.chaosnet.ChaosNet;
@@ -53,12 +56,12 @@ public class ServerOrgManager extends BaseOrgManager {
     public ChunkPos currChunkPos;
     private HashMap<String, RawOutputNeuron> rawOutputNeurons = new HashMap();
 
+    private int ticksSinceRawOutputReceived = 1000;
 
     public ServerOrgManager(){
 
         this.attatchEventListener(new OrgPositionManager());
         //this.attatchEventListener(new ChaosTeamTracker());
-        //this.attatchEventListener(new BuildyManager());
         //this.attatchEventListener(new OrgDeathListener());
     }
     public void setTmpNamespace(String _tmpNamespace){
@@ -218,8 +221,9 @@ public class ServerOrgManager extends BaseOrgManager {
 
         }*/
         if(
-            this.rawOutputNeurons.size() > 0
+            this.ticksSinceRawOutputReceived < 20
         ) {
+            this.getEntity().getNavigator().clearPath();
             if (state.equals(State.Spawned)) {
                 initInventory();
                 markTicking();
@@ -232,11 +236,16 @@ public class ServerOrgManager extends BaseOrgManager {
                 }
             }
         }else {
+            if( this.ticksSinceRawOutputReceived == 20){
+                this.getActionBuffer().resumeAction();
+
+            }
             this.getActionBuffer().execute();
         }
         for (BaseChaosEventListener eventListener : getEventListeners()) {
             eventListener.onServerTick(this);
         }
+        this.ticksSinceRawOutputReceived += 1;
     }
     public void setState(State newState){
         if(state.equals(newState)){
@@ -326,6 +335,10 @@ public class ServerOrgManager extends BaseOrgManager {
             eventListener.onServerActionComplete(this, actionBase);
         }
 
+    }
+
+    public void resetTicksSinceRawOutputReceived() {
+        this.ticksSinceRawOutputReceived = 0;
     }
 
 

@@ -44,7 +44,9 @@ public class OrgEntity extends MobEntity {
 
     @ObjectHolder("chaoscraft:org_entity")
     public static final EntityType<OrgEntity> ORGANISM_TYPE = null;
+    public static final double LOOK_DISTANCE = 10.0D;
     public static final double REACH_DISTANCE = 5.0D;
+    public static final double ATTACK_DISTANCE = 3.0D;
 
 
 
@@ -59,7 +61,7 @@ public class OrgEntity extends MobEntity {
     private int selectedItemIndex = 0;
     protected ItemStackHandler itemHandler = new ItemStackHandler(36);
     protected double desiredPitch;
-    protected double desiredYaw;
+    protected Double desiredYaw;
     protected double desiredHeadYaw;
     protected ChaosTarget chaosTarget;
 
@@ -70,7 +72,7 @@ public class OrgEntity extends MobEntity {
 
 
     private int miningTicks = 0;
-
+    private ArrayList<ItemEntity> tossedItemEntities = new ArrayList<>();
 
 
 
@@ -84,7 +86,7 @@ public class OrgEntity extends MobEntity {
 
     private int spawnHash;
     private Vec3d desiredLookVec = null;
-
+    private boolean sendRawOutput = false;
 
 
     public OrgEntity(EntityType<? extends MobEntity> type, World world) {
@@ -134,8 +136,10 @@ public class OrgEntity extends MobEntity {
     public void setSpawnHash(int _spawnHash) {
         this.spawnHash = _spawnHash;
     }
-
-    public void setDesiredYaw(double _desiredYaw){
+    public void setDesiredYaw(float _desiredYaw){
+        this.setDesiredYaw((double) _desiredYaw);
+    }
+    public void setDesiredYaw(Double _desiredYaw){
         this.desiredYaw = _desiredYaw;
     }
     public ClientOrgManager getClientOrgManager(){
@@ -193,8 +197,8 @@ public class OrgEntity extends MobEntity {
 
 
 
-    @Override
-    public void jump(){
+    //@Override
+    public void _jump(){
         if(
             !this.isJumping &&
             !this.isAirBorne &&
@@ -584,6 +588,9 @@ public class OrgEntity extends MobEntity {
             if(serverOrgManager != null) {
                 ChaosCraft.getServer().replaceAlteredBlocks(serverOrgManager);
             }
+            for (ItemEntity tossedItemEntity : tossedItemEntities) {
+                tossedItemEntity.remove();
+            }
            /* if (chunkTicket != null) {
                 ForgeChunkManager.releaseTicket(chunkTicket);
                 chunkTicket = null;
@@ -803,6 +810,7 @@ public class OrgEntity extends MobEntity {
         }
         ItemEntity entityItem = new ItemEntity(world, blockPos.getX(), blockPos.getY(), blockPos.getZ());
         entityItem.setItem(itemStack);
+        tossedItemEntities.add(entityItem);
         world.getServer().getWorld(DimensionType.OVERWORLD).summonEntity(entityItem);
 
 
@@ -883,7 +891,7 @@ public class OrgEntity extends MobEntity {
     }
 
     private void updatePitchAndYaw(){
-        if(desiredLookVec == null){
+     /*   if(desiredLookVec == null){
             desiredLookVec = this.getLook(1);
         }
         this.getLookController().setLookPosition(
@@ -892,7 +900,7 @@ public class OrgEntity extends MobEntity {
                 desiredLookVec.getZ(),
                 360,
                 360
-        );
+        );*/
       /*  double yOffset = Math.sin(Math.toRadians(desiredPitch));
         double zOffset = Math.cos(Math.toRadians(this.desiredHeadYaw)) * Math.cos(Math.toRadians(desiredPitch));
         double xOffset = Math.sin(Math.toRadians(this.desiredHeadYaw)) * Math.cos(Math.toRadians(desiredPitch));
@@ -901,7 +909,9 @@ public class OrgEntity extends MobEntity {
         this.getLookController().setLookPosition(pos.getX() + xOffset, pos.getY()*//* + this.getEyeHeight() *//*+ yOffset, pos.getZ() + zOffset, 360, 360);
         */this.renderYawOffset = 0;//(float)this.desiredYaw;
         //this.rotationYawHead = (float)this.desiredYaw;
-        this.setRotation((float) this.desiredYaw, 0);
+        if(this.desiredYaw != null) {
+            this.setRotation( this.desiredYaw.floatValue(), 0);
+        }
     }
 
     private void checkForItemPickup(){
@@ -942,10 +952,12 @@ public class OrgEntity extends MobEntity {
                 if(outputNeuron.executeSide.equals(OutputNeuron.ExecuteSide.Client)){
                     outputNeuron.execute();
                 }else {
-                    if(outputNeuron instanceof RawOutputNeuron) {
-                        RawOutputNeuron rawOutputNeuron = (RawOutputNeuron) outputNeuron;
-                        CCClientOutputNeuronActionPacket packet = new CCClientOutputNeuronActionPacket(rawOutputNeuron);
-                        ChaosNetworkManager.sendToServer(packet);
+                    if(this.sendRawOutput) {
+                        if (outputNeuron instanceof RawOutputNeuron) {
+                            RawOutputNeuron rawOutputNeuron = (RawOutputNeuron) outputNeuron;
+                            CCClientOutputNeuronActionPacket packet = new CCClientOutputNeuronActionPacket(rawOutputNeuron);
+                            ChaosNetworkManager.sendToServer(packet);
+                        }
                     }
                 }
 
@@ -1153,6 +1165,18 @@ public class OrgEntity extends MobEntity {
     public void updateInventory(int index, ItemStack itemStack, int selectedItemIndex) {
         this.itemHandler.setStackInSlot(index, itemStack);
         this.selectedItemIndex = selectedItemIndex;
+    }
+
+    public void setSendRawOutput(boolean sendRawOutput) {
+        this.sendRawOutput = sendRawOutput;
+    }
+
+    public boolean getSndRawOutput() {
+        return this.sendRawOutput;
+    }
+
+    public boolean getSendRawOutput() {
+        return this.sendRawOutput;
     }
 
     public enum CanCraftResults{
