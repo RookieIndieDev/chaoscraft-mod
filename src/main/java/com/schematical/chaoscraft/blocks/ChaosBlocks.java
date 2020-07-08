@@ -24,5 +24,6 @@ public class ChaosBlocks {
     public static final RegistryObject<Block> BUILD_AREA_MARKER = BLOCKS.register("build_area_marker", () -> new BuildAreaMarkerBlock(Block.Properties.create(Material.BARRIER).tickRandomly().hardnessAndResistance(-1.0F, 3600000.0F)));
     public static ArrayList<BlockPos> spawnBlocks = new ArrayList<BlockPos>();
     public static ArrayList<BlockPos> waypointsBlocks = new ArrayList<BlockPos>();
+    public static ArrayList<BlockPos> markerBlocks = new ArrayList<BlockPos>();
     public static HashMap<String, BlockPos> matchManagerBlocks = new HashMap<>();
 }
